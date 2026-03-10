@@ -1,22 +1,25 @@
 {
   "name": "backoffice-api",
   "version": "1.0.0",
-  "description": "A serverless API ",
+  "description": "A serverless API",
   "main": "src/index.ts",
   "scripts": {
     "start": "serverless offline start",
     "offline": "serverless offline start",
     "build": "tsc",
+    "deploy": "serverless deploy",
+    "deploy:info": "serverless info",
+    "remove": "serverless remove",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest --watch",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "aws-sdk": "^2.1693.0"
+    "@aws-sdk/client-lambda": "^3.1006.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161",
@@ -28,7 +31,7 @@
     "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=24.x"
+    "node": ">=20"
   },
   "license": "MIT"
 }

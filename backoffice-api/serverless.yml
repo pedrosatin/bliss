@@ -1,5 +1,6 @@
 service: backoffice-api
-frameworkVersion: '3'
+frameworkVersion: '^3.40.0'
+configValidationMode: error
 
 plugins:
   - serverless-plugin-typescript
@@ -8,7 +9,27 @@ plugins:
 provider:
   name: aws
   runtime: nodejs20.x
-  region: us-east-1
+  region: sa-east-1
+  timeout: 6
+  memorySize: 128
+  logRetentionInDays: 3
+  environment:
+    NODE_OPTIONS: --enable-source-maps
+  stackTags:
+    project: bliss
+    service: backoffice-api
+  tags:
+    project: bliss
+    service: backoffice-api
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: '*'
 
 custom:
   serverless-offline:
@@ -20,6 +41,6 @@ functions:
   getAll:
     handler: src/handlers/tickets-handler.handleGetAll
     events:
-      - http:
-          path: tickets
+      - httpApi:
+          path: /tickets
           method: get
