@@ -6,5 +6,6 @@
 
 Para mais detalhes de como rodar cada projeto, leia os arquivos README.md dentro de cada pasta.
 
-[README backoffice-api]: ./backoffice-api/README.md
-[README playwright-automation]: ./playwright-automation/README.md
+[README backoffice-api](./backoffice-api/README.md)
+
+[README playwright-automation](./playwright-automation/README.md)
