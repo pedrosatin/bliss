@@ -4,8 +4,6 @@
   "description": "A serverless API",
   "main": "src/index.ts",
   "scripts": {
-    "start": "serverless offline start",
-    "offline": "serverless offline start",
     "build": "tsc",
     "deploy": "serverless deploy",
     "deploy:info": "serverless info",
@@ -14,15 +12,12 @@
     "lint:fix": "oxlint --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest --watch",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "test:watch": "vitest --watch"
   },
-  "dependencies": {
-    "@aws-sdk/client-lambda": "^3.1006.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161",
+    "@types/node": "^24.12.0",
     "oxlint": "^1.51.0",
     "serverless": "^3.40.0",
     "serverless-offline": "^13.8.1",
