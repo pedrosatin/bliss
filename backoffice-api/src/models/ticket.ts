@@ -1,0 +1,93 @@
+import { CreateTicketInput } from '../types/CreateTicketInput'
+import { Ticket } from '../types/Ticket'
+import { TicketListFilterInput } from '../types/TicketListFilterInput'
+import { TicketListFilters } from '../types/TicketListFilters'
+import { isTicketPriority } from '../types/TicketPriority'
+import { isTicketStatus } from '../types/TicketStatus'
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const normalizeQueryValue = (value?: string | null): string | undefined => {
+  const normalizedValue = value?.trim()
+  return normalizedValue ? normalizedValue : undefined
+}
+
+// Não retorna o erro diretamente para evitar expor detalhes de validação na resposta da API, mas pode ser logado internamente para monitoramento e debugging. A função retorna uma string de erro ou null se a validação passar.
+
+export const validateCreateTicketInput = (
+  input: Partial<CreateTicketInput>,
+): string | null => {
+  if (!input.title?.trim()) {
+    return 'Please inform the title'
+  }
+
+  if (!isTicketPriority(input.priority)) {
+    return 'Priority must be one of LOW, MEDIUM, HIGH'
+  }
+
+  if (!input.createdBy?.trim() || !EMAIL_REGEX.test(input.createdBy.trim())) {
+    return 'createdBy must be a valid email'
+  }
+
+  if (input.status && !isTicketStatus(input.status)) {
+    return 'Status must be one of OPEN, IN_PROGRESS, CLOSED'
+  }
+
+  return null
+}
+
+export const validateTicketListFilterInput = (
+  input: TicketListFilterInput,
+): string | null => {
+  const normalizedCreatedBy = normalizeQueryValue(input.createdBy)
+  const normalizedStatus = normalizeQueryValue(input.status)?.toUpperCase()
+
+  if (
+    input.createdBy !== undefined &&
+    (!normalizedCreatedBy || !EMAIL_REGEX.test(normalizedCreatedBy))
+  ) {
+    return 'createdBy filter must be a valid email'
+  }
+
+  if (input.status !== undefined && !isTicketStatus(normalizedStatus)) {
+    return 'status filter must be one of OPEN, IN_PROGRESS, CLOSED'
+  }
+
+  return null
+}
+
+export const buildTicketListFilters = (
+  input: TicketListFilterInput,
+): TicketListFilters => {
+  const createdBy = input.createdBy?.trim()?.toLowerCase()
+  const normalizedStatus = normalizeQueryValue(input.status)?.toUpperCase()
+
+  let inputFilter: TicketListFilters = {}
+
+  if (createdBy) {
+    inputFilter = { ...inputFilter, createdBy }
+  }
+
+  if (normalizedStatus && isTicketStatus(normalizedStatus)) {
+    inputFilter = { ...inputFilter, status: normalizedStatus }
+  }
+
+  return inputFilter
+}
+
+export const buildTicket = (
+  input: CreateTicketInput,
+  id: string,
+  now = new Date().toISOString(),
+): Ticket => {
+  return {
+    id,
+    title: input.title.trim(),
+    description: input.description?.trim(),
+    priority: input.priority,
+    createdBy: input.createdBy.trim().toLowerCase(),
+    status: input.status ?? 'OPEN',
+    createdAt: now,
+    updatedAt: now,
+  }
+}
