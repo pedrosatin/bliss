@@ -2,16 +2,24 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
+    "lib": ["ES2020"],
+    "types": ["node"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "inlineSourceMap": true,
+    "inlineSources": true,
     "paths": {
-      "*": ["./types/*"]
+      "@app/types/*": ["./src/types/*"],
+      "@app/lib/*": ["./src/lib/*"],
+      "@app/handlers/*": ["./src/handlers/*"],
+      "@app/services/*": ["./src/services/*"],
+      "@app/repositories/*": ["./src/repositories/*"],
+      "@app/models/*": ["./src/models/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "infra/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]
 }

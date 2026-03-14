@@ -1,46 +1,70 @@
-import { Ticket } from '../types/Ticket'
-import { TicketListFilters } from '../types/TicketListFilters'
+import { GetCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'
+
+import {
+  getDynamoDBDocumentClient,
+  getTicketsTableName,
+} from '@app/lib/dynamodb'
+import { Ticket } from '@app/types/Ticket'
+import { TicketListFilters } from '@app/types/TicketListFilters'
 
 export const fetchAllTickets = async (
   filters: TicketListFilters = {},
 ): Promise<Ticket[]> => {
-  return Promise.resolve([
-    {
-      id: '1',
-      title: 'Example Ticket 1',
-      description: 'This is an example ticket',
-      priority: 'MEDIUM',
-      createdBy: 'user1',
-      status: 'OPEN',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: 'Example Ticket 2',
-      description: 'This is another example ticket',
-      priority: 'HIGH',
-      createdBy: 'user2',
-      status: 'IN_PROGRESS',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ])
+  // This uses a DynamoDB Scan, which reads the entire table on every call.
+  // This is acceptable for this project, not for large scale cause it cost as the table grows.
+  const dynamoDBDocumentClient = getDynamoDBDocumentClient()
+  const filterExpressions: string[] = []
+  const expressionAttributeNames: Record<string, string> = {}
+  const expressionAttributeValues: Record<string, string> = {}
+
+  if (filters.createdBy) {
+    filterExpressions.push('#createdBy = :createdBy')
+    expressionAttributeNames['#createdBy'] = 'createdBy'
+    expressionAttributeValues[':createdBy'] = filters.createdBy
+  }
+
+  if (filters.status) {
+    filterExpressions.push('#status = :status')
+    expressionAttributeNames['#status'] = 'status'
+    expressionAttributeValues[':status'] = filters.status
+  }
+
+  const result = await dynamoDBDocumentClient.send(
+    new ScanCommand({
+      TableName: getTicketsTableName(),
+      ...(filterExpressions.length > 0
+        ? {
+            FilterExpression: filterExpressions.join(' AND '),
+            ExpressionAttributeNames: expressionAttributeNames,
+            ExpressionAttributeValues: expressionAttributeValues,
+          }
+        : {}),
+    }),
+  )
+
+  return (result.Items as Ticket[] | undefined) ?? []
 }
 
 export const fetchTicket = async (id: string): Promise<Ticket | null> => {
-  return Promise.resolve({
-    id,
-    title: 'Example Ticket',
-    description: 'This is an example ticket',
-    priority: 'MEDIUM',
-    createdBy: 'user1',
-    status: 'OPEN',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  })
+  const dynamoDBDocumentClient = getDynamoDBDocumentClient()
+  const result = await dynamoDBDocumentClient.send(
+    new GetCommand({
+      TableName: getTicketsTableName(),
+      Key: { id },
+      ConsistentRead: true,
+    }),
+  )
+
+  return (result.Item as Ticket | undefined) ?? null
 }
 
 export const storeTicket = async (ticket: Ticket): Promise<void> => {
-  return Promise.resolve()
+  const dynamoDBDocumentClient = getDynamoDBDocumentClient()
+
+  await dynamoDBDocumentClient.send(
+    new PutCommand({
+      TableName: getTicketsTableName(),
+      Item: ticket,
+    }),
+  )
 }

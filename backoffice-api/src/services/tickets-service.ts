@@ -1,13 +1,13 @@
-import { buildTicket, validateCreateTicketInput } from '../models/ticket'
-import { CreateTicketInput } from '../types/CreateTicketInput'
-import { Ticket } from '../types/Ticket'
-import { TicketListFilters } from '../types/TicketListFilters'
-import { ValidationError } from '../lib/errors'
+import { buildTicket, validateCreateTicketInput } from '@app/models/ticket'
+import { CreateTicketInput } from '@app/types/CreateTicketInput'
+import { Ticket } from '@app/types/Ticket'
+import { TicketListFilters } from '@app/types/TicketListFilters'
+import { ValidationError } from '@app/lib/errors'
 import {
   fetchAllTickets,
   fetchTicket,
   storeTicket,
-} from '../repositories/tickets-repository'
+} from '@app/repositories/tickets-repository'
 
 export const getAllTickets = async (
   filters: TicketListFilters = {},

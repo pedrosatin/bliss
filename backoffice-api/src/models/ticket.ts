@@ -1,9 +1,9 @@
-import { CreateTicketInput } from '../types/CreateTicketInput'
-import { Ticket } from '../types/Ticket'
-import { TicketListFilterInput } from '../types/TicketListFilterInput'
-import { TicketListFilters } from '../types/TicketListFilters'
-import { isTicketPriority } from '../types/TicketPriority'
-import { isTicketStatus } from '../types/TicketStatus'
+import { CreateTicketInput } from '@app/types/CreateTicketInput'
+import { Ticket } from '@app/types/Ticket'
+import { TicketListFilterInput } from '@app/types/TicketListFilterInput'
+import { TicketListFilters } from '@app/types/TicketListFilters'
+import { isTicketPriority } from '@app/types/TicketPriority'
+import { isTicketStatus } from '@app/types/TicketStatus'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -11,8 +11,6 @@ const normalizeQueryValue = (value?: string | null): string | undefined => {
   const normalizedValue = value?.trim()
   return normalizedValue ? normalizedValue : undefined
 }
-
-// Não retorna o erro diretamente para evitar expor detalhes de validação na resposta da API, mas pode ser logado internamente para monitoramento e debugging. A função retorna uma string de erro ou null se a validação passar.
 
 export const validateCreateTicketInput = (
   input: Partial<CreateTicketInput>,

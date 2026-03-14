@@ -2,31 +2,38 @@
   "name": "backoffice-api",
   "version": "1.0.0",
   "description": "A serverless API",
-  "main": "src/index.ts",
   "scripts": {
-    "build": "tsc",
-    "deploy": "serverless deploy",
-    "deploy:info": "serverless info",
-    "remove": "serverless remove",
+    "dev": "docker compose up",
+    "dev:down": "docker compose down",
+    "cdk:synth": "cdk synth",
+    "cdk:diff": "cdk diff",
+    "cdk:deploy": "cdk deploy --all",
+    "cdk:destroy": "cdk destroy --all",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest --watch"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.758.0",
+    "@aws-sdk/lib-dynamodb": "^3.758.0"
+  },
   "devDependencies": {
+    "@hono/node-server": "^1.19.11",
     "@types/aws-lambda": "^8.10.161",
     "@types/node": "^24.12.0",
+    "aws-cdk": "^2.1111.0",
+    "aws-cdk-lib": "^2.243.0",
+    "hono": "^4.12.7",
+    "nodemon": "^3.1.10",
     "oxlint": "^1.51.0",
-    "serverless": "^3.40.0",
-    "serverless-offline": "^13.8.1",
-    "serverless-plugin-typescript": "^2.1.5",
-    "typescript": "^4.9.5",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "license": "MIT"
 }

@@ -1,6 +1,4 @@
 node_modules/
 dist/
-.build/
-.serverless/
 coverage/
-.dynamodb/
+cdk.out/

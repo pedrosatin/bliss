@@ -1,18 +1,18 @@
 import { APIGatewayEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 
-import { ValidationError } from '../lib/errors'
-import { HttpStatusCode } from '../types/HttpStatusCode'
-import { errorResponse, successResponse } from '../lib/response'
+import { ValidationError } from '@app/lib/errors'
+import { HttpStatusCode } from '@app/types/HttpStatusCode'
+import { errorResponse, successResponse } from '@app/lib/response'
 import {
   buildTicketListFilters,
   validateTicketListFilterInput,
-} from '../models/ticket'
-import { CreateTicketInput } from '../types/CreateTicketInput'
+} from '@app/models/ticket'
+import { CreateTicketInput } from '@app/types/CreateTicketInput'
 import {
   createTicket,
   getAllTickets,
   getTicketById,
-} from '../services/tickets-service'
+} from '@app/services/tickets-service'
 
 const getRequestId = (event: APIGatewayEvent, context: Context): string => {
   return event.requestContext.requestId || context.awsRequestId || 'unknown'
