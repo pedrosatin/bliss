@@ -4,11 +4,13 @@ import {
   getDynamoDBDocumentClient,
   getTicketsTableName,
 } from '@app/lib/dynamodb'
+import { logInfo, RequestContextLog } from '@app/lib/logger'
 import { Ticket } from '@app/types/Ticket'
 import { TicketListFilters } from '@app/types/TicketListFilters'
 
 export const fetchAllTickets = async (
   filters: TicketListFilters = {},
+  requestContext: RequestContextLog = {},
 ): Promise<Ticket[]> => {
   // This uses a DynamoDB Scan, which reads the entire table on every call.
   // This is acceptable for this project, not for large scale cause it cost as the table grows.
@@ -42,10 +44,23 @@ export const fetchAllTickets = async (
     }),
   )
 
-  return (result.Items as Ticket[] | undefined) ?? []
+  const items = (result.Items as Ticket[] | undefined) ?? []
+
+  logInfo('REPOSITORY - DynamoDB scan finished', {
+    ...requestContext,
+    operation: 'tickets.list',
+    createdBy: filters.createdBy,
+    status: filters.status,
+    resultCount: items.length,
+  })
+
+  return items
 }
 
-export const fetchTicket = async (id: string): Promise<Ticket | null> => {
+export const fetchTicket = async (
+  id: string,
+  requestContext: RequestContextLog = {},
+): Promise<Ticket | null> => {
   const dynamoDBDocumentClient = getDynamoDBDocumentClient()
   const result = await dynamoDBDocumentClient.send(
     new GetCommand({
@@ -55,10 +70,22 @@ export const fetchTicket = async (id: string): Promise<Ticket | null> => {
     }),
   )
 
-  return (result.Item as Ticket | undefined) ?? null
+  const item = (result.Item as Ticket | undefined) ?? null
+
+  logInfo('REPOSITORY - DynamoDB get finished', {
+    ...requestContext,
+    operation: 'tickets.get',
+    ticketId: id,
+    resultCount: item ? 1 : 0,
+  })
+
+  return item
 }
 
-export const storeTicket = async (ticket: Ticket): Promise<void> => {
+export const storeTicket = async (
+  ticket: Ticket,
+  requestContext: RequestContextLog = {},
+): Promise<void> => {
   const dynamoDBDocumentClient = getDynamoDBDocumentClient()
 
   await dynamoDBDocumentClient.send(
@@ -67,4 +94,13 @@ export const storeTicket = async (ticket: Ticket): Promise<void> => {
       Item: ticket,
     }),
   )
+
+  logInfo('REPOSITORY - DynamoDB put finished', {
+    ...requestContext,
+    operation: 'tickets.create',
+    ticketId: ticket.id,
+    createdBy: ticket.createdBy,
+    priority: ticket.priority,
+    status: ticket.status,
+  })
 }

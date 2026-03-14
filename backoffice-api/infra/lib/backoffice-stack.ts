@@ -31,6 +31,10 @@ export const createBackofficeStack = (
       stage === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
   })
 
+  const apiAccessLogs = new logs.LogGroup(stack, 'HttpApiAccessLogs', {
+    retention: logs.RetentionDays.FIVE_DAYS,
+  })
+
   // Shared Lambda config
   const handlerPath = path.join(
     __dirname,
@@ -90,6 +94,24 @@ export const createBackofficeStack = (
       allowOrigins: ['*'], // TODO: Create a web page and restrict this for production
       allowHeaders: ['Content-Type', 'x-request-id'],
     },
+  })
+
+  const defaultStage = httpApi.defaultStage?.node.defaultChild as
+    | apiGateway.CfnStage
+    | undefined
+
+  // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-logging.html
+  defaultStage?.addPropertyOverride('AccessLogSettings', {
+    DestinationArn: apiAccessLogs.logGroupArn,
+    Format: JSON.stringify({
+      requestId: '$context.requestId',
+      routeKey: '$context.routeKey',
+      status: '$context.status',
+      responseLatency: '$context.responseLatency',
+      integrationErrorMessage: '$context.integrationErrorMessage',
+      ip: '$context.identity.sourceIp',
+      userAgent: '$context.identity.userAgent',
+    }),
   })
 
   httpApi.addRoutes({

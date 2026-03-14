@@ -1,6 +1,7 @@
 import { APIGatewayEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 
 import { ValidationError } from '@app/lib/errors'
+import { logError, logInfo, logWarn, RequestContextLog } from '@app/lib/logger'
 import { HttpStatusCode } from '@app/types/HttpStatusCode'
 import { errorResponse, successResponse } from '@app/lib/response'
 import {
@@ -18,7 +19,20 @@ const getRequestId = (event: APIGatewayEvent, context: Context): string => {
   return event.requestContext.requestId || context.awsRequestId || 'unknown'
 }
 
-const buildRequestHeaders = (requestId: string): Record<string, string> => {
+const buildRequestContext = (
+  event: APIGatewayEvent,
+  context: Context,
+  requestId: string,
+): RequestContextLog => {
+  return {
+    requestId,
+    awsRequestId: context.awsRequestId,
+    route: event.path,
+    method: event.httpMethod,
+  }
+}
+
+const buildRequestIdHeader = (requestId: string): Record<string, string> => {
   return {
     'x-request-id': requestId,
   }
@@ -29,6 +43,7 @@ export const handleGetAllTickets = async (
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   const requestId = getRequestId(event, context)
+  const requestContext = buildRequestContext(event, context, requestId)
   const listFiltersInput = {
     createdBy: event.queryStringParameters?.createdBy,
     status: event.queryStringParameters?.status,
@@ -36,28 +51,61 @@ export const handleGetAllTickets = async (
   const listFiltersError = validateTicketListFilterInput(listFiltersInput)
 
   if (listFiltersError) {
+    logWarn('HANDLER - Listing tickets rejected by validation', {
+      ...requestContext,
+      operation: 'tickets.list',
+      createdBy: listFiltersInput.createdBy ?? undefined,
+      status: listFiltersInput.status ?? undefined,
+      statusCode: HttpStatusCode.BadRequest,
+    })
+
     return errorResponse(
       HttpStatusCode.BadRequest,
       listFiltersError,
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
   }
 
   const listFilters = buildTicketListFilters(listFiltersInput)
 
   try {
-    const tickets = await getAllTickets(listFilters)
+    logInfo('HANDLER - Listing tickets started', {
+      ...requestContext,
+      operation: 'tickets.list',
+      createdBy: listFilters.createdBy,
+      status: listFilters.status,
+    })
+
+    const tickets = await getAllTickets(listFilters, requestContext)
+
+    logInfo('HANDLER - Listing tickets finished', {
+      ...requestContext,
+      operation: 'tickets.list',
+      createdBy: listFilters.createdBy,
+      status: listFilters.status,
+      statusCode: HttpStatusCode.Ok,
+      resultCount: tickets.length,
+    })
 
     return successResponse(
       HttpStatusCode.Ok,
       tickets,
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
-  } catch {
+  } catch (error) {
+    logError('HANDLER - Listing tickets failed', {
+      ...requestContext,
+      operation: 'tickets.list',
+      createdBy: listFilters.createdBy,
+      status: listFilters.status,
+      statusCode: HttpStatusCode.InternalServerError,
+      error,
+    })
+
     return errorResponse(
       HttpStatusCode.InternalServerError,
       'Error retrieving tickets',
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
   }
 }
@@ -67,37 +115,72 @@ export const handleGetTicket = async (
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   const requestId = getRequestId(event, context)
+  const requestContext = buildRequestContext(event, context, requestId)
   const ticketId = event.pathParameters?.id
 
   if (!ticketId) {
+    logWarn('HANDLER - Get ticket rejected because id is missing', {
+      ...requestContext,
+      operation: 'tickets.get',
+      statusCode: HttpStatusCode.BadRequest,
+    })
+
     return errorResponse(
       HttpStatusCode.BadRequest,
       'Ticket ID is required',
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
   }
 
   try {
-    const ticket = await getTicketById(ticketId)
+    logInfo('HANDLER - Fetching ticket started', {
+      ...requestContext,
+      operation: 'tickets.get',
+      ticketId,
+    })
+
+    const ticket = await getTicketById(ticketId, requestContext)
 
     if (!ticket) {
+      logWarn('HANDLER - Ticket not found', {
+        ...requestContext,
+        operation: 'tickets.get',
+        ticketId,
+        statusCode: HttpStatusCode.NotFound,
+      })
+
       return errorResponse(
         HttpStatusCode.NotFound,
         'Ticket not found',
-        buildRequestHeaders(requestId),
+        buildRequestIdHeader(requestId),
       )
     }
+
+    logInfo('HANDLER - Fetching ticket finished', {
+      ...requestContext,
+      operation: 'tickets.get',
+      ticketId,
+      statusCode: HttpStatusCode.Ok,
+    })
 
     return successResponse(
       HttpStatusCode.Ok,
       ticket,
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
-  } catch {
+  } catch (error) {
+    logError('HANDLER - Fetching ticket failed', {
+      ...requestContext,
+      operation: 'tickets.get',
+      ticketId,
+      statusCode: HttpStatusCode.InternalServerError,
+      error,
+    })
+
     return errorResponse(
       HttpStatusCode.InternalServerError,
       'Error retrieving ticket',
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
   }
 }
@@ -107,39 +190,83 @@ export const handleCreateTicket = async (
   context: Context,
 ): Promise<APIGatewayProxyResult> => {
   const requestId = getRequestId(event, context)
+  const requestContext = buildRequestContext(event, context, requestId)
   let ticketData: CreateTicketInput
 
   try {
     ticketData = JSON.parse(event.body || '{}')
   } catch {
+    logWarn(
+      'HANDLER - Create ticket rejected because payload is invalid JSON',
+      {
+        ...requestContext,
+        operation: 'tickets.create',
+        statusCode: HttpStatusCode.BadRequest,
+      },
+    )
+
     return errorResponse(
       HttpStatusCode.BadRequest,
       'Invalid JSON payload',
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
   }
 
   try {
-    const newTicket = await createTicket(ticketData)
+    logInfo('HANDLER - Create ticket started', {
+      ...requestContext,
+      operation: 'tickets.create',
+      createdBy: ticketData.createdBy,
+      priority: ticketData.priority,
+    })
+
+    const newTicket = await createTicket(ticketData, requestContext)
+
+    logInfo('HANDLER - Create ticket finished', {
+      ...requestContext,
+      operation: 'tickets.create',
+      ticketId: newTicket.id,
+      createdBy: newTicket.createdBy,
+      priority: newTicket.priority,
+      status: newTicket.status,
+      statusCode: HttpStatusCode.Created,
+    })
 
     return successResponse(
       HttpStatusCode.Created,
       newTicket,
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
   } catch (error) {
     if (error instanceof ValidationError) {
+      logWarn('HANDLER - Create ticket rejected by validation', {
+        ...requestContext,
+        operation: 'tickets.create',
+        createdBy: ticketData.createdBy,
+        priority: ticketData.priority,
+        statusCode: HttpStatusCode.BadRequest,
+      })
+
       return errorResponse(
         HttpStatusCode.BadRequest,
         error.message,
-        buildRequestHeaders(requestId),
+        buildRequestIdHeader(requestId),
       )
     }
+
+    logError('HANDLER - Create ticket failed', {
+      ...requestContext,
+      operation: 'tickets.create',
+      createdBy: ticketData.createdBy,
+      priority: ticketData.priority,
+      statusCode: HttpStatusCode.InternalServerError,
+      error,
+    })
 
     return errorResponse(
       HttpStatusCode.InternalServerError,
       'Error creating ticket',
-      buildRequestHeaders(requestId),
+      buildRequestIdHeader(requestId),
     )
   }
 }

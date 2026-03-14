@@ -1,5 +1,6 @@
 import { buildTicket, validateCreateTicketInput } from '@app/models/ticket'
 import { CreateTicketInput } from '@app/types/CreateTicketInput'
+import { logError, logInfo, RequestContextLog } from '@app/lib/logger'
 import { Ticket } from '@app/types/Ticket'
 import { TicketListFilters } from '@app/types/TicketListFilters'
 import { ValidationError } from '@app/lib/errors'
@@ -11,25 +12,58 @@ import {
 
 export const getAllTickets = async (
   filters: TicketListFilters = {},
+  requestContext: RequestContextLog = {},
 ): Promise<Ticket[]> => {
-  return fetchAllTickets(filters)
+  logInfo('SERVICE - Fetching tickets from repository', {
+    ...requestContext,
+    operation: 'tickets.list',
+    createdBy: filters.createdBy,
+    status: filters.status,
+  })
+
+  return fetchAllTickets(filters, requestContext)
 }
 
-export const getTicketById = async (id: string): Promise<Ticket | null> => {
-  return fetchTicket(id)
+export const getTicketById = async (
+  id: string,
+  requestContext: RequestContextLog = {},
+): Promise<Ticket | null> => {
+  logInfo('SERVICE - Fetching ticket from repository', {
+    ...requestContext,
+    operation: 'tickets.get',
+    ticketId: id,
+  })
+
+  return fetchTicket(id, requestContext)
 }
 
 export const createTicket = async (
   input: CreateTicketInput,
+  requestContext: RequestContextLog = {},
 ): Promise<Ticket> => {
   const validationErrorMessage = validateCreateTicketInput(input)
 
   if (validationErrorMessage) {
+    logError('SERVICE - Create ticket input validation ', {
+      ...requestContext,
+      operation: 'tickets.create',
+      error: validationErrorMessage,
+    })
     throw new ValidationError(validationErrorMessage)
   }
 
   const ticket = buildTicket(input, crypto.randomUUID())
-  await storeTicket(ticket)
+
+  logInfo('SERVICE - Storing new ticket in repository', {
+    ...requestContext,
+    operation: 'tickets.create',
+    ticketId: ticket.id,
+    createdBy: ticket.createdBy,
+    priority: ticket.priority,
+    status: ticket.status,
+  })
+
+  await storeTicket(ticket, requestContext)
 
   return ticket
 }
