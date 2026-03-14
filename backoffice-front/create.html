@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requests | Nova request</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell app-shell-narrow">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Front estático</p>
+          <h1>Nova request</h1>
+          <p class="page-subtitle">
+            Crie uma solicitação usando o endpoint `POST /requests`.
+          </p>
+        </div>
+        <nav class="page-nav">
+          <a class="nav-link" href="./index.html">Lista</a>
+          <a class="nav-link is-active" href="./create.html">Nova request</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Preencha os dados</h2>
+              <p id="api-base-url" data-api-source-label hidden></p>
+            </div>
+          </div>
+
+          <div id="feedback" class="feedback" hidden></div>
+
+          <form id="create-form" class="stack-lg">
+            <label class="field">
+              <span>Ambiente da API</span>
+              <select data-api-environment>
+                <option value="local">Local</option>
+                <option value="prod">Produção</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Título *</span>
+              <input
+                id="title"
+                name="title"
+                type="text"
+                maxlength="120"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>Descrição</span>
+              <textarea
+                id="description"
+                name="description"
+                rows="5"
+                placeholder="Descreva o contexto da solicitação"
+              ></textarea>
+            </label>
+
+            <div class="form-grid">
+              <label class="field">
+                <span>Prioridade *</span>
+                <select id="priority" name="priority" required>
+                  <option value="LOW">Baixa</option>
+                  <option value="MEDIUM">Média</option>
+                  <option value="HIGH">Alta</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Status inicial</span>
+                <select id="status" name="status">
+                  <option value="">Aberto (padrão da API)</option>
+                  <option value="OPEN">Aberto</option>
+                  <option value="IN_PROGRESS">Em andamento</option>
+                  <option value="CLOSED">Fechado</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Email do criador *</span>
+              <input
+                id="createdBy"
+                name="createdBy"
+                type="email"
+                placeholder="email@dominio.com"
+                required
+              />
+            </label>
+
+            <div class="actions-row">
+              <button id="submit-button" type="submit">Criar request</button>
+
+              <a class="button-link" href="./index.html">Voltar para lista</a>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./assets/create.js"></script>
+  </body>
+</html>

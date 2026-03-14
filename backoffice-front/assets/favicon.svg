@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Requests">
+  <rect width="64" height="64" rx="16" fill="#1a73e8" />
+  <path d="M18 20.5C18 18.567 19.567 17 21.5 17h21C44.433 17 46 18.567 46 20.5v23C46 45.433 44.433 47 42.5 47h-21C19.567 47 18 45.433 18 43.5zm8 4.5a2 2 0 1 0 0 4h12a2 2 0 1 0 0-4zm0 8a2 2 0 1 0 0 4h12a2 2 0 1 0 0-4zm0 8a2 2 0 1 0 0 4h7a2 2 0 1 0 0-4z" fill="#fff"/>
+  <circle cx="42" cy="41" r="6" fill="#fff" opacity="0.18"/>
+</svg>

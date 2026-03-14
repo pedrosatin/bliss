@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requests | Detalhe</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell app-shell-narrow">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Front estático</p>
+          <h1>Detalhe da request</h1>
+          <p class="page-subtitle">
+            Página por id usando o endpoint `GET /requests/{id}`.
+          </p>
+        </div>
+        <nav class="page-nav">
+          <a class="nav-link" href="./index.html">Lista</a>
+          <a class="nav-link" href="./create.html">Nova request</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 id="page-title">Carregando request…</h2>
+              <p id="api-base-url" data-api-source-label hidden></p>
+            </div>
+          </div>
+
+          <div id="feedback" class="feedback" hidden></div>
+
+          <div class="actions-row actions-row-spaced">
+            <label class="field field-inline">
+              <span>Ambiente da API</span>
+              <select data-api-environment>
+                <option value="local">Local</option>
+                <option value="prod">Produção</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              class="button-ghost"
+              data-reset-api-override
+              hidden
+            >
+              Resetar override
+            </button>
+          </div>
+
+          <div id="missing-id" class="empty-state" hidden>
+            Informe o parâmetro <code>?id=...</code> na URL para consultar uma
+            request.
+          </div>
+
+          <dl id="request-details" class="details-grid" hidden>
+            <div class="detail-item">
+              <dt>ID</dt>
+              <dd id="detail-id">-</dd>
+            </div>
+            <div class="detail-item">
+              <dt>Status</dt>
+              <dd id="detail-status">-</dd>
+            </div>
+            <div class="detail-item">
+              <dt>Prioridade</dt>
+              <dd id="detail-priority">-</dd>
+            </div>
+            <div class="detail-item">
+              <dt>Criado por</dt>
+              <dd id="detail-created-by">-</dd>
+            </div>
+            <div class="detail-item detail-item-wide">
+              <dt>Título</dt>
+              <dd id="detail-title">-</dd>
+            </div>
+            <div class="detail-item detail-item-wide">
+              <dt>Descrição</dt>
+              <dd id="detail-description">-</dd>
+            </div>
+            <div class="detail-item">
+              <dt>Criado em</dt>
+              <dd id="detail-created-at">-</dd>
+            </div>
+            <div class="detail-item">
+              <dt>Atualizado em</dt>
+              <dd id="detail-updated-at">-</dd>
+            </div>
+          </dl>
+
+          <div class="callout">
+            <strong>Nota:</strong> a API atual não expõe `PUT/PATCH`, então esta
+            página mostra os detalhes por id. Se você adicionar update no
+            backend, ela pode evoluir facilmente para uma tela de edição.
+          </div>
+
+          <div class="actions-row">
+            <a class="button-link" href="./index.html">Voltar para lista</a>
+            <a class="button-link" href="./create.html">Criar nova request</a>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./assets/request.js"></script>
+  </body>
+</html>

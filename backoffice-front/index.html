@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Requests | Lista</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Front estático</p>
+          <h1>Requests</h1>
+          <p class="page-subtitle">
+            Lista de solicitações com filtros simples e navegação para detalhe.
+          </p>
+        </div>
+        <nav class="page-nav">
+          <a class="nav-link is-active" href="./index.html">Lista</a>
+          <a class="nav-link" href="./create.html">Nova request</a>
+        </nav>
+      </header>
+
+      <main class="page-grid">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Filtros</h2>
+              <p>Use um ou ambos os filtros disponíveis na API.</p>
+            </div>
+          </div>
+
+          <form id="filters-form" class="stack-lg">
+            <label class="field">
+              <span>Ambiente da API</span>
+              <select data-api-environment>
+                <option value="local">Local</option>
+                <option value="prod">Produção</option>
+              </select>
+            </label>
+
+            <div class="form-grid">
+              <label class="field">
+                <span>Criado por</span>
+                <input
+                  id="filter-created-by"
+                  name="createdBy"
+                  type="email"
+                  placeholder="email@dominio.com"
+                />
+              </label>
+
+              <label class="field">
+                <span>Status</span>
+                <select id="filter-status" name="status">
+                  <option value="">Todos</option>
+                  <option value="OPEN">Aberto</option>
+                  <option value="IN_PROGRESS">Em andamento</option>
+                  <option value="CLOSED">Fechado</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="actions-row">
+              <button type="submit">Aplicar filtros</button>
+              <button id="clear-filters" type="button" class="button-secondary">
+                Limpar
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-header">
+            <div>
+              <h2>Lista de requests</h2>
+              <p id="results-summary">Carregando dados…</p>
+            </div>
+            <div class="stack-xs align-end">
+              <span
+                id="api-base-url"
+                data-api-source-label
+                class="meta-chip"
+                hidden
+              ></span>
+              <button
+                type="button"
+                class="button-ghost"
+                data-reset-api-override
+                hidden
+              >
+                Resetar override
+              </button>
+            </div>
+          </div>
+
+          <div id="feedback" class="feedback" hidden></div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Título</th>
+                  <th>Status</th>
+                  <th>Prioridade</th>
+                  <th>Criado por</th>
+                  <th>Atualizado em</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="requests-table-body"></tbody>
+            </table>
+          </div>
+
+          <div id="empty-state" class="empty-state" hidden>
+            Nenhuma request encontrada com os filtros atuais.
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./assets/index.js"></script>
+  </body>
+</html>
