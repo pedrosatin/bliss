@@ -56,7 +56,7 @@ const toAPIGatewayEvent = (
 // App Server
 const app = new Hono()
 
-app.get('/tickets', async (c) => {
+app.get('/requests', async (c) => {
   const result = await handleGetAllTickets(
     toAPIGatewayEvent(c, {}, ''),
     makeLambdaContext(),
@@ -68,7 +68,7 @@ app.get('/tickets', async (c) => {
   )
 })
 
-app.get('/tickets/:id', async (c) => {
+app.get('/requests/:id', async (c) => {
   const result = await handleGetTicket(
     toAPIGatewayEvent(c, { id: c.req.param('id') }, ''),
     makeLambdaContext(),
@@ -80,7 +80,7 @@ app.get('/tickets/:id', async (c) => {
   )
 })
 
-app.post('/tickets', async (c) => {
+app.post('/requests', async (c) => {
   const body = await c.req.text()
   const result = await handleCreateTicket(
     toAPIGatewayEvent(c, {}, body),
@@ -95,7 +95,7 @@ app.post('/tickets', async (c) => {
 
 serve({ fetch: app.fetch, port: PORT }, () => {
   console.log(`\n🚀  Dev server running at http://localhost:${PORT}\n`)
-  console.log('  GET    /tickets')
-  console.log('  GET    /tickets/:id')
-  console.log('  POST   /tickets\n')
+  console.log('  GET    /requests')
+  console.log('  GET    /requests/:id')
+  console.log('  POST   /requests\n')
 })
