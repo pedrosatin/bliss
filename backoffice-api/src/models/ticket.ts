@@ -3,7 +3,7 @@ import { Ticket } from '@app/types/Ticket'
 import { TicketListFilterInput } from '@app/types/TicketListFilterInput'
 import { TicketListFilters } from '@app/types/TicketListFilters'
 import { isTicketPriority } from '@app/types/TicketPriority'
-import { isTicketStatus } from '@app/types/TicketStatus'
+import { isTicketStatus, TicketStatus } from '@app/types/TicketStatus'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -67,7 +67,7 @@ export const buildTicketListFilters = (
   }
 
   if (normalizedStatus && isTicketStatus(normalizedStatus)) {
-    inputFilter = { ...inputFilter, status: normalizedStatus }
+    inputFilter = { ...inputFilter, status: normalizedStatus as TicketStatus }
   }
 
   return inputFilter
