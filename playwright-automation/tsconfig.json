@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "./*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "playwright-report", "test-results"]
+}
