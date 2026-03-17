@@ -1,15 +1,28 @@
 {
   "name": "playwright-automation",
   "version": "1.0.0",
-  "description": "",
+  "description": "Playwright-based RPA runtime",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx index.ts",
+    "dev:headed": "HEADLESS=false tsx index.ts",
+    "dev:debug": "PWDEBUG=1 HEADLESS=false tsx index.ts",
+    "start": "node index.js",
+    "test:e2e": "playwright test"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "dependencies": {
+    "csv-parse": "^6.1.0",
+    "playwright": "^1.58.2"
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@types/node": "^25.5.0"
+    "@types/node": "^25.5.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.3"
   }
 }
