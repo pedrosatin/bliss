@@ -23,17 +23,10 @@
         </nav>
       </header>
 
-      <main class="page-grid">
+      <main class="page-stack">
         <section class="panel">
-          <div class="panel-header">
-            <div>
-              <h2>Filtros</h2>
-              <p>Use um ou ambos os filtros disponíveis na API.</p>
-            </div>
-          </div>
-
-          <form id="filters-form" class="stack-lg">
-            <label class="field">
+          <form id="filters-form" class="filter-bar">
+            <label class="field filter-field">
               <span>Ambiente da API</span>
               <select data-api-environment>
                 <option value="local">Local</option>
@@ -41,29 +34,27 @@
               </select>
             </label>
 
-            <div class="form-grid">
-              <label class="field">
-                <span>Criado por</span>
-                <input
-                  id="filter-created-by"
-                  name="createdBy"
-                  type="email"
-                  placeholder="email@dominio.com"
-                />
-              </label>
+            <label class="field filter-field filter-field-grow">
+              <span>Criado por</span>
+              <input
+                id="filter-created-by"
+                name="createdBy"
+                type="email"
+                placeholder="email@dominio.com"
+              />
+            </label>
 
-              <label class="field">
-                <span>Status</span>
-                <select id="filter-status" name="status">
-                  <option value="">Todos</option>
-                  <option value="OPEN">Aberto</option>
-                  <option value="IN_PROGRESS">Em andamento</option>
-                  <option value="CLOSED">Fechado</option>
-                </select>
-              </label>
-            </div>
+            <label class="field filter-field">
+              <span>Status</span>
+              <select id="filter-status" name="status">
+                <option value="">Todos</option>
+                <option value="OPEN">Aberto</option>
+                <option value="IN_PROGRESS">Em andamento</option>
+                <option value="CLOSED">Fechado</option>
+              </select>
+            </label>
 
-            <div class="actions-row">
+            <div class="filter-actions">
               <button type="submit">Aplicar filtros</button>
               <button id="clear-filters" type="button" class="button-secondary">
                 Limpar

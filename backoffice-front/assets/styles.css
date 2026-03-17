@@ -144,6 +144,33 @@ p {
   gap: 20px;
 }
 
+.page-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.filter-field {
+  min-width: 160px;
+}
+
+.filter-field-grow {
+  flex: 1;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-top: 26px;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--panel-border);
@@ -403,6 +430,20 @@ code {
   .details-grid {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+  }
+
+  .filter-field,
+  .filter-field-grow {
+    width: 100%;
+    flex: none;
+  }
+
+  .filter-actions {
+    padding-top: 0;
   }
 
   .page-header,
