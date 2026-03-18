@@ -2,10 +2,7 @@ import path from 'node:path'
 import { BrowserContext, Locator, Page } from 'playwright'
 
 import { logger } from '../utils/logger'
-import {
-  CreateRequestAttemptInput,
-  CreateRequestAttemptResult,
-} from '../types/FlowRequest'
+import { CreateRequestResult, RequestCsvItem } from '../types/FlowRequest'
 
 // Constants
 
@@ -34,43 +31,23 @@ const getPageHeading = (page: Page): Locator =>
 
 // Helpers
 
-async function captureAttemptScreenshot(
+async function captureSuccessScreenshotSafely(
   page: Page,
   artifactsDir: string,
   rowNumber: number,
-  attempt: number,
-  status: 'success' | 'error',
-): Promise<string> {
-  const rowToken = String(rowNumber).padStart(3, '0')
-  const screenshotPath = path.join(
-    artifactsDir,
-    `row-${rowToken}-attempt-${attempt}-${status}.png`,
-  )
-
-  await page.screenshot({ path: screenshotPath, fullPage: true })
-  return screenshotPath
-}
-
-async function captureAttemptScreenshotSafely(
-  page: Page,
-  artifactsDir: string,
-  rowNumber: number,
-  attempt: number,
-  status: 'success' | 'error',
 ): Promise<string> {
   try {
-    return await captureAttemptScreenshot(
-      page,
+    const screenshotPath = path.join(
       artifactsDir,
-      rowNumber,
-      attempt,
-      status,
+      `row-${rowNumber}-success.png`,
     )
+
+    await page.screenshot({ path: screenshotPath, fullPage: true })
+
+    return screenshotPath
   } catch (error) {
-    logger.error('Falha ao capturar screenshot da tentativa', {
+    logger.error('Falha ao capturar screenshot de sucesso', {
       rowNumber,
-      attempt,
-      status,
       error: error instanceof Error ? error.message : String(error),
     })
     return ''
@@ -92,18 +69,35 @@ async function readFeedback(
 
 export async function createRequest(
   context: BrowserContext,
-  input: CreateRequestAttemptInput,
+  csvItem: RequestCsvItem,
   artifactsDir: string,
-): Promise<CreateRequestAttemptResult> {
-  const { csvItem, attempt } = input
+): Promise<CreateRequestResult> {
+  const tracePath = path.join(
+    artifactsDir,
+    `row-${csvItem.rowNumber}-failure-trace.zip`,
+  )
+
   let page: Page | undefined
+  let traceStarted = false
+
+  let result: CreateRequestResult = {
+    rowNumber: csvItem.rowNumber,
+    success: false,
+    feedbackText: '',
+  }
 
   try {
     logger.info('Executando criação de request', {
       rowNumber: csvItem.rowNumber,
-      attempt,
       title: csvItem.title,
     })
+
+    await context.tracing.start({
+      screenshots: true,
+      snapshots: true,
+      sources: true,
+    })
+    traceStarted = true
 
     page = await context.newPage()
     await page.goto(DEFAULT_CREATE_URL, { waitUntil: 'domcontentloaded' })
@@ -134,19 +128,16 @@ export async function createRequest(
 
     const feedbackResult = await readFeedback(feedback)
     const isSuccess = feedbackResult.className.includes('success')
-    const screenshotPath = await captureAttemptScreenshotSafely(
-      page,
-      artifactsDir,
-      csvItem.rowNumber,
-      attempt,
-      isSuccess ? 'success' : 'error',
-    )
+    const screenshotPath = isSuccess
+      ? await captureSuccessScreenshotSafely(
+          page,
+          artifactsDir,
+          csvItem.rowNumber,
+        )
+      : undefined
 
-    await page.close()
-
-    return {
+    result = {
       rowNumber: csvItem.rowNumber,
-      attempt,
       success: isSuccess,
       screenshotPath,
       feedbackText: feedbackResult.text,
@@ -155,29 +146,44 @@ export async function createRequest(
   } catch (error) {
     logger.error('Erro técnico ao criar request', {
       rowNumber: csvItem.rowNumber,
-      attempt,
       error: error instanceof Error ? error.message : String(error),
     })
 
-    let screenshotPath = ''
-    if (page) {
-      screenshotPath = await captureAttemptScreenshotSafely(
-        page,
-        artifactsDir,
-        csvItem.rowNumber,
-        attempt,
-        'error',
-      )
-      await page.close()
-    }
-
-    return {
+    result = {
       rowNumber: csvItem.rowNumber,
-      attempt,
       success: false,
-      screenshotPath,
       feedbackText: '',
       errorMessage: error instanceof Error ? error.message : String(error),
     }
+  } finally {
+    if (page) {
+      try {
+        await page.close()
+      } catch (error) {
+        logger.error('Falha ao fechar página do fluxo', {
+          rowNumber: csvItem.rowNumber,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
+
+    if (traceStarted) {
+      try {
+        if (result.success) {
+          await context.tracing.stop()
+        } else {
+          await context.tracing.stop({ path: tracePath })
+          result.tracePath = tracePath
+        }
+      } catch (error) {
+        logger.error('Falha ao salvar trace do fluxo', {
+          rowNumber: csvItem.rowNumber,
+          tracePath,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
   }
+
+  return result
 }

@@ -19,7 +19,7 @@ export async function readRequestsFromCsv(
   }) as Record<string, string>[]
 
   const items = records.map((row, index) => ({
-    rowNumber: index + 2,
+    rowNumber: index + 1,
     title: String(row.title ?? ''),
     description: String(row.description ?? ''),
     priority: String(row.priority ?? ''),

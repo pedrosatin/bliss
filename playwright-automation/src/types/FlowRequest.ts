@@ -7,16 +7,11 @@ export interface RequestCsvItem {
   createdBy: string
 }
 
-export interface CreateRequestAttemptInput {
-  csvItem: RequestCsvItem
-  attempt: number
-}
-
-export interface CreateRequestAttemptResult {
+export interface CreateRequestResult {
   rowNumber: number
-  attempt: number
   success: boolean
-  screenshotPath: string
+  screenshotPath?: string
+  tracePath?: string
   feedbackText: string
   errorMessage?: string
 }

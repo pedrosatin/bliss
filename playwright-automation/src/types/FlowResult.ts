@@ -1,4 +1,4 @@
-import { CreateRequestAttemptResult } from './FlowRequest'
+import { CreateRequestResult } from './FlowRequest'
 
 export interface FlowSummary {
   total: number
@@ -11,7 +11,6 @@ export interface FlowResult {
   artifactsDir: string
   outputPath: string
   summary: FlowSummary
-  items: CreateRequestAttemptResult[]
-  attempts: CreateRequestAttemptResult[]
+  items: CreateRequestResult[]
   error?: Error
 }

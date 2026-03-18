@@ -4,64 +4,17 @@ import { createRequest } from './src/flows/create-request'
 import { createRunArtifactsDir, writeRunOutput } from './src/utils/artifacts'
 import { logger } from './src/utils/logger'
 import { FlowResult } from './src/types/FlowResult'
-import {
-  CreateRequestAttemptResult,
-  RequestCsvItem,
-} from './src/types/FlowRequest'
+import { CreateRequestResult } from './src/types/FlowRequest'
 import { readRequestsFromCsv } from './src/utils/csv'
-import { BrowserContext, chromium } from 'playwright'
+import { chromium } from 'playwright'
 
 const taskName = process.env.RPA_TASK_NAME ?? 'create-proposal'
 const flowName = 'create-bliss-request'
 const csvPath =
   process.env.RPA_INPUT_CSV_PATH ??
   path.resolve(process.cwd(), 'src/examples/form-data.csv')
-const maxRetryCount = 1
 
-async function runRequestWithRetry(
-  context: BrowserContext,
-  csvItem: RequestCsvItem,
-  artifactsDir: string,
-): Promise<{
-  finalResult: CreateRequestAttemptResult
-  attempts: CreateRequestAttemptResult[]
-}> {
-  let lastResult: CreateRequestAttemptResult | undefined
-  const attempts: CreateRequestAttemptResult[] = []
-
-  for (let attempt = 1; attempt <= maxRetryCount + 1; attempt += 1) {
-    const result = await createRequest(
-      context,
-      { csvItem, attempt },
-      artifactsDir,
-    )
-    lastResult = result
-    attempts.push(result)
-
-    if (result.success) {
-      return {
-        finalResult: result,
-        attempts,
-      }
-    }
-
-    if (attempt <= maxRetryCount) {
-      logger.info('Retry do item após falha', {
-        rowNumber: csvItem.rowNumber,
-        attempt,
-      })
-    }
-  }
-
-  return {
-    finalResult: lastResult as CreateRequestAttemptResult,
-    attempts,
-  }
-}
-
-function buildSummary(
-  items: CreateRequestAttemptResult[],
-): FlowResult['summary'] {
+function buildSummary(items: CreateRequestResult[]): FlowResult['summary'] {
   const successCount = items.filter((item) => item.success).length
 
   return {
@@ -78,17 +31,11 @@ async function runBatch(
   logger.info('Lendo CSV de entrada', { csvPath })
 
   const requests = await readRequestsFromCsv(csvPath)
-  const itemResults: CreateRequestAttemptResult[] = []
-  const attemptResults: CreateRequestAttemptResult[] = []
+  const itemResults: CreateRequestResult[] = []
 
   for (const item of requests) {
-    const { finalResult, attempts } = await runRequestWithRetry(
-      context,
-      item,
-      artifactsDir,
-    )
-    itemResults.push(finalResult)
-    attemptResults.push(...attempts)
+    const result = await createRequest(context, item, artifactsDir)
+    itemResults.push(result)
   }
 
   const summary = buildSummary(itemResults)
@@ -96,12 +43,8 @@ async function runBatch(
     flow: flowName,
     taskName,
     sourceCsvPath: csvPath,
-    retryPolicy: {
-      maxRetryCount,
-    },
     summary,
     items: itemResults,
-    attempts: attemptResults,
     finishedAt: new Date().toISOString(),
   })
 
@@ -111,11 +54,10 @@ async function runBatch(
     outputPath,
     summary,
     items: itemResults,
-    attempts: attemptResults,
   }
 }
 
-async function main(): Promise<void> {
+async function main() {
   logger.info('Iniciando task RPA', { taskName })
 
   const browser = await chromium.launch({
