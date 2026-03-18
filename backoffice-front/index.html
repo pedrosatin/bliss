@@ -54,6 +54,15 @@
               </select>
             </label>
 
+            <label class="field filter-field">
+              <span>Itens por página</span>
+              <select id="filter-limit" name="limit">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </label>
+
             <div class="filter-actions">
               <button type="submit">Aplicar filtros</button>
               <button id="clear-filters" type="button" class="button-secondary">
@@ -108,6 +117,16 @@
 
           <div id="empty-state" class="empty-state" hidden>
             Nenhuma request encontrada com os filtros atuais.
+          </div>
+
+          <div class="pagination-bar">
+            <button id="prev-page" type="button" class="button-secondary">
+              Anterior
+            </button>
+            <p id="pagination-summary" class="pagination-summary">Página 1</p>
+            <button id="next-page" type="button" class="button-secondary">
+              Próxima
+            </button>
           </div>
         </section>
       </main>

@@ -47,6 +47,8 @@ export const handleGetAllTickets = async (
   const listFiltersInput = {
     createdBy: event.queryStringParameters?.createdBy,
     status: event.queryStringParameters?.status,
+    limit: event.queryStringParameters?.limit,
+    nextToken: event.queryStringParameters?.nextToken,
   }
   const listFiltersError = validateTicketListFilterInput(listFiltersInput)
 
@@ -56,6 +58,7 @@ export const handleGetAllTickets = async (
       operation: 'tickets.list',
       createdBy: listFiltersInput.createdBy ?? undefined,
       status: listFiltersInput.status ?? undefined,
+      hasNextToken: Boolean(listFiltersInput.nextToken),
       statusCode: HttpStatusCode.BadRequest,
     })
 
@@ -72,32 +75,57 @@ export const handleGetAllTickets = async (
     logInfo('HANDLER - Listing tickets started', {
       ...requestContext,
       operation: 'tickets.list',
+      limit: listFilters.limit,
       createdBy: listFilters.createdBy,
       status: listFilters.status,
+      hasNextToken: Boolean(listFilters.nextToken),
     })
 
-    const tickets = await getAllTickets(listFilters, requestContext)
+    const listResult = await getAllTickets(listFilters, requestContext)
 
     logInfo('HANDLER - Listing tickets finished', {
       ...requestContext,
       operation: 'tickets.list',
+      limit: listFilters.limit,
       createdBy: listFilters.createdBy,
       status: listFilters.status,
+      hasNextToken: Boolean(listFilters.nextToken),
+      hasMore: Boolean(listResult.nextToken),
       statusCode: HttpStatusCode.Ok,
-      resultCount: tickets.length,
+      resultCount: listResult.items.length,
     })
 
     return successResponse(
       HttpStatusCode.Ok,
-      tickets,
+      listResult,
       buildRequestIdHeader(requestId),
     )
   } catch (error) {
+    if (error instanceof ValidationError) {
+      logWarn('HANDLER - Listing tickets rejected by validation', {
+        ...requestContext,
+        operation: 'tickets.list',
+        limit: listFilters.limit,
+        createdBy: listFilters.createdBy,
+        status: listFilters.status,
+        hasNextToken: Boolean(listFilters.nextToken),
+        statusCode: HttpStatusCode.BadRequest,
+      })
+
+      return errorResponse(
+        HttpStatusCode.BadRequest,
+        error.message,
+        buildRequestIdHeader(requestId),
+      )
+    }
+
     logError('HANDLER - Listing tickets failed', {
       ...requestContext,
       operation: 'tickets.list',
+      limit: listFilters.limit,
       createdBy: listFilters.createdBy,
       status: listFilters.status,
+      hasNextToken: Boolean(listFilters.nextToken),
       statusCode: HttpStatusCode.InternalServerError,
       error,
     })

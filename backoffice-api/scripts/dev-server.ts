@@ -56,6 +56,14 @@ const toAPIGatewayEvent = (
 // App Server
 const app = new Hono()
 
+app.options('*', (c) => {
+  return c.newResponse(null, 204, {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type,x-request-id',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+  })
+})
+
 app.get('/requests', async (c) => {
   const result = await handleGetAllTickets(
     toAPIGatewayEvent(c, {}, ''),

@@ -4,6 +4,8 @@ import { HttpStatusCode } from '../types/HttpStatusCode'
 
 const defaultHeaders = {
   'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type,x-request-id',
 }
 
 interface ResponseHeaders {

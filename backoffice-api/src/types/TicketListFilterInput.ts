@@ -1,4 +1,6 @@
 export interface TicketListFilterInput {
-  createdBy?: string | null
-  status?: string | null
+  createdBy?: string
+  status?: string
+  limit?: string
+  nextToken?: string
 }

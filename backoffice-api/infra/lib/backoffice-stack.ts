@@ -31,6 +31,20 @@ export const createBackofficeStack = (
       stage === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
   })
 
+  ticketsTable.addGlobalSecondaryIndex({
+    indexName: 'createdBy-createdAt-index',
+    partitionKey: { name: 'createdBy', type: dynamodb.AttributeType.STRING },
+    sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
+    projectionType: dynamodb.ProjectionType.ALL,
+  })
+
+  ticketsTable.addGlobalSecondaryIndex({
+    indexName: 'status-createdAt-index',
+    partitionKey: { name: 'status', type: dynamodb.AttributeType.STRING },
+    sortKey: { name: 'createdAt', type: dynamodb.AttributeType.STRING },
+    projectionType: dynamodb.ProjectionType.ALL,
+  })
+
   const apiAccessLogs = new logs.LogGroup(stack, 'HttpApiAccessLogs', {
     retention: logs.RetentionDays.FIVE_DAYS,
   })
@@ -78,7 +92,7 @@ export const createBackofficeStack = (
   // DynamoDB permissions
   // Define specific permissions for each function to follow the principle of least privilege.
   // This is also why we have separate Lambda functions instead of a single one with a switch case on the handler.
-  ticketsTable.grant(getAllTicketsFn, 'dynamodb:Scan')
+  ticketsTable.grant(getAllTicketsFn, 'dynamodb:Query', 'dynamodb:Scan')
   ticketsTable.grant(getTicketFn, 'dynamodb:GetItem')
   ticketsTable.grant(createTicketFn, 'dynamodb:PutItem')
 

@@ -3,6 +3,7 @@ import { CreateTicketInput } from '@app/types/CreateTicketInput'
 import { logError, logInfo, RequestContextLog } from '@app/lib/logger'
 import { Ticket } from '@app/types/Ticket'
 import { TicketListFilters } from '@app/types/TicketListFilters'
+import { TicketListResult } from '@app/types/TicketListResult'
 import { ValidationError } from '@app/lib/errors'
 import {
   fetchAllTickets,
@@ -11,14 +12,16 @@ import {
 } from '@app/repositories/tickets-repository'
 
 export const getAllTickets = async (
-  filters: TicketListFilters = {},
+  filters: TicketListFilters,
   requestContext: RequestContextLog = {},
-): Promise<Ticket[]> => {
+): Promise<TicketListResult> => {
   logInfo('SERVICE - Fetching tickets from repository', {
     ...requestContext,
     operation: 'tickets.list',
+    limit: filters.limit,
     createdBy: filters.createdBy,
     status: filters.status,
+    hasNextToken: Boolean(filters.nextToken),
   })
 
   return fetchAllTickets(filters, requestContext)

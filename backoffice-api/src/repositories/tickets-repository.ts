@@ -1,4 +1,9 @@
-import { GetCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'
+import {
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+  ScanCommand,
+} from '@aws-sdk/lib-dynamodb'
 
 import {
   getDynamoDBDocumentClient,
@@ -7,54 +12,126 @@ import {
 import { logInfo, RequestContextLog } from '@app/lib/logger'
 import { Ticket } from '@app/types/Ticket'
 import { TicketListFilters } from '@app/types/TicketListFilters'
+import { TicketListResult } from '@app/types/TicketListResult'
+
+const CREATED_BY_CREATED_AT_INDEX_NAME = 'createdBy-createdAt-index'
+const STATUS_CREATED_AT_INDEX_NAME = 'status-createdAt-index'
+
+const encodeNextToken = (lastEvaluatedKey?: Record<string, unknown>) => {
+  if (!lastEvaluatedKey) {
+    return undefined
+  }
+
+  return Buffer.from(JSON.stringify(lastEvaluatedKey), 'utf8').toString(
+    'base64url',
+  )
+}
+
+const decodeNextToken = (nextToken?: string) => {
+  if (!nextToken) {
+    return undefined
+  }
+
+  return JSON.parse(
+    Buffer.from(nextToken, 'base64url').toString('utf8'),
+  ) as Record<string, unknown>
+}
 
 export const fetchAllTickets = async (
-  filters: TicketListFilters = {},
+  filters: TicketListFilters,
   requestContext: RequestContextLog = {},
-): Promise<Ticket[]> => {
-  // This uses a DynamoDB Scan, which reads the entire table on every call.
-  // This is acceptable for this project, not for large scale cause it cost as the table grows.
+): Promise<TicketListResult> => {
   const dynamoDBDocumentClient = getDynamoDBDocumentClient()
-  const filterExpressions: string[] = []
+  const tableName = getTicketsTableName()
+  const exclusiveStartKey = decodeNextToken(filters.nextToken)
   const expressionAttributeNames: Record<string, string> = {}
   const expressionAttributeValues: Record<string, string> = {}
 
+  let items: Ticket[] = []
+  let nextToken: string | undefined
+  let accessPattern = 'scan'
+
   if (filters.createdBy) {
-    filterExpressions.push('#createdBy = :createdBy')
     expressionAttributeNames['#createdBy'] = 'createdBy'
     expressionAttributeValues[':createdBy'] = filters.createdBy
-  }
 
-  if (filters.status) {
-    filterExpressions.push('#status = :status')
+    if (filters.status) {
+      expressionAttributeNames['#status'] = 'status'
+      expressionAttributeValues[':status'] = filters.status
+    }
+
+    const result = await dynamoDBDocumentClient.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: CREATED_BY_CREATED_AT_INDEX_NAME,
+        KeyConditionExpression: '#createdBy = :createdBy',
+        ...(filters.status
+          ? {
+              FilterExpression: '#status = :status',
+            }
+          : {}),
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
+        Limit: filters.limit,
+        ExclusiveStartKey: exclusiveStartKey,
+        ScanIndexForward: false,
+      }),
+    )
+
+    items = (result.Items as Ticket[] | undefined) ?? []
+
+    nextToken = encodeNextToken(result.LastEvaluatedKey)
+    accessPattern = 'query-createdBy'
+  } else if (filters.status) {
     expressionAttributeNames['#status'] = 'status'
     expressionAttributeValues[':status'] = filters.status
+
+    const result = await dynamoDBDocumentClient.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: STATUS_CREATED_AT_INDEX_NAME,
+        KeyConditionExpression: '#status = :status',
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
+        Limit: filters.limit,
+        ExclusiveStartKey: exclusiveStartKey,
+        ScanIndexForward: false,
+      }),
+    )
+
+    items = (result.Items as Ticket[] | undefined) ?? []
+    nextToken = encodeNextToken(result.LastEvaluatedKey)
+    accessPattern = 'query-status'
+  } else {
+    const result = await dynamoDBDocumentClient.send(
+      new ScanCommand({
+        TableName: tableName,
+        Limit: filters.limit,
+        ExclusiveStartKey: exclusiveStartKey,
+      }),
+    )
+
+    items = (result.Items as Ticket[] | undefined) ?? []
+    nextToken = encodeNextToken(result.LastEvaluatedKey)
   }
-
-  const result = await dynamoDBDocumentClient.send(
-    new ScanCommand({
-      TableName: getTicketsTableName(),
-      ...(filterExpressions.length > 0
-        ? {
-            FilterExpression: filterExpressions.join(' AND '),
-            ExpressionAttributeNames: expressionAttributeNames,
-            ExpressionAttributeValues: expressionAttributeValues,
-          }
-        : {}),
-    }),
-  )
-
-  const items = (result.Items as Ticket[] | undefined) ?? []
 
   logInfo('REPOSITORY - DynamoDB scan finished', {
     ...requestContext,
     operation: 'tickets.list',
+    accessPattern,
+    limit: filters.limit,
+    hasNextToken: Boolean(filters.nextToken),
     createdBy: filters.createdBy,
     status: filters.status,
     resultCount: items.length,
+    hasMore: Boolean(nextToken),
   })
 
-  return items
+  return {
+    items,
+    limit: filters.limit,
+    ...(nextToken ? { nextToken } : {}),
+  }
 }
 
 export const fetchTicket = async (

@@ -7,6 +7,9 @@ import { isTicketStatus, TicketStatus } from '@app/types/TicketStatus'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export const DEFAULT_TICKET_LIST_LIMIT = 10
+export const MAX_TICKET_LIST_LIMIT = 100
+
 const normalizeQueryValue = (value?: string | null): string | undefined => {
   const normalizedValue = value?.trim()
   return normalizedValue ? normalizedValue : undefined
@@ -39,6 +42,8 @@ export const validateTicketListFilterInput = (
 ): string | null => {
   const normalizedCreatedBy = normalizeQueryValue(input.createdBy)
   const normalizedStatus = normalizeQueryValue(input.status)?.toUpperCase()
+  const normalizedLimit = normalizeQueryValue(input.limit)
+  const normalizedNextToken = normalizeQueryValue(input.nextToken)
 
   if (
     input.createdBy !== undefined &&
@@ -51,6 +56,18 @@ export const validateTicketListFilterInput = (
     return 'status filter must be one of OPEN, IN_PROGRESS, CLOSED'
   }
 
+  if (input.limit !== undefined) {
+    const parsedLimit = Number(normalizedLimit)
+
+    if (parsedLimit < 1 || parsedLimit > MAX_TICKET_LIST_LIMIT) {
+      return `limit filter must be an integer between 1 and ${MAX_TICKET_LIST_LIMIT}`
+    }
+  }
+
+  if (input.nextToken !== undefined && !normalizedNextToken) {
+    return 'nextToken filter must be a non-empty string'
+  }
+
   return null
 }
 
@@ -59,8 +76,14 @@ export const buildTicketListFilters = (
 ): TicketListFilters => {
   const createdBy = input.createdBy?.trim()?.toLowerCase()
   const normalizedStatus = normalizeQueryValue(input.status)?.toUpperCase()
+  const normalizedLimit = normalizeQueryValue(input.limit)
+  const nextToken = normalizeQueryValue(input.nextToken)
 
-  let inputFilter: TicketListFilters = {}
+  const limit = normalizedLimit
+    ? Math.min(Math.max(Number(normalizedLimit), 1), MAX_TICKET_LIST_LIMIT)
+    : DEFAULT_TICKET_LIST_LIMIT
+
+  let inputFilter: TicketListFilters = { limit }
 
   if (createdBy) {
     inputFilter = { ...inputFilter, createdBy }
@@ -68,6 +91,10 @@ export const buildTicketListFilters = (
 
   if (normalizedStatus && isTicketStatus(normalizedStatus)) {
     inputFilter = { ...inputFilter, status: normalizedStatus as TicketStatus }
+  }
+
+  if (nextToken) {
+    inputFilter = { ...inputFilter, nextToken }
   }
 
   return inputFilter

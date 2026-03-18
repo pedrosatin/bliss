@@ -19,6 +19,10 @@ export interface LogDetails extends RequestContextLog {
   createdBy?: string
   priority?: string
   status?: string
+  limit?: number
+  hasNextToken?: boolean
+  hasMore?: boolean
+  accessPattern?: string
   resultCount?: number
   errorMessage?: string
   errorName?: string

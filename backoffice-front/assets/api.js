@@ -24,7 +24,7 @@ const buildUrl = (path = '', query = {}) => {
   const url = new URL(`${requestsBaseUrl}${normalizedPath}`)
 
   Object.entries(query).forEach(([key, value]) => {
-    if (value) {
+    if (value !== undefined && value !== null && value !== '') {
       url.searchParams.set(key, value)
     }
   })
@@ -47,9 +47,10 @@ const parseResponseBody = async (response) => {
 }
 
 const request = async (path, options = {}, query = {}) => {
+  const hasBody = options.body !== undefined && options.body !== null
   const response = await fetch(buildUrl(path, query), {
     headers: {
-      'Content-Type': 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers ?? {}),
     },
     ...options,
