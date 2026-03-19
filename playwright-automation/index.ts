@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import path from 'node:path'
 
 import { createRequest } from './src/flows/create-request'
@@ -6,7 +7,7 @@ import { logger } from './src/utils/logger'
 import { FlowResult } from './src/types/FlowResult'
 import { CreateRequestResult } from './src/types/FlowRequest'
 import { readRequestsFromCsv } from './src/utils/csv'
-import { chromium } from 'playwright'
+import { chromium, Browser } from 'playwright'
 
 const taskName = process.env.RPA_TASK_NAME ?? 'create-proposal'
 const flowName = 'create-bliss-request'
@@ -24,9 +25,7 @@ function buildSummary(items: CreateRequestResult[]): FlowResult['summary'] {
   }
 }
 
-async function runBatch(
-  context: Parameters<typeof createRequest>[0],
-): Promise<FlowResult> {
+async function runBatch(browser: Browser): Promise<FlowResult> {
   const artifactsDir = await createRunArtifactsDir(flowName)
   logger.info('Lendo CSV de entrada', { csvPath })
 
@@ -34,7 +33,7 @@ async function runBatch(
   const itemResults: CreateRequestResult[] = []
 
   for (const item of requests) {
-    const result = await createRequest(context, item, artifactsDir)
+    const result = await createRequest(browser, item, artifactsDir)
     itemResults.push(result)
   }
 
@@ -64,10 +63,8 @@ async function main() {
     headless: process.env.HEADLESS !== 'false',
   })
 
-  const context = await browser.newContext()
-
   try {
-    const result = await runBatch(context)
+    const result = await runBatch(browser)
 
     logger.info('Task finalizada com sucesso', {
       taskName,
@@ -87,7 +84,6 @@ async function main() {
 
     process.exitCode = 1
   } finally {
-    await context.close()
     await browser.close()
   }
 }

@@ -1,3 +1,9 @@
 title,description,priority,status,createdBy
-Ajustar onboarding do cliente,Validar os dados iniciais antes do cadastro definitivo,MEDIUM,OPEN,ops@example.com
-Revisar cobrança recorrente,,HIGH,IN_PROGRESS,finance@example.com
+Ajustar validação de CPF no cadastro,O campo de CPF aceita valores inválidos no formulário de cadastro de clientes,HIGH,OPEN,ana.souza@example.com
+Revisar cobrança recorrente do plano mensal,Clientes relatam cobranças duplicadas no ciclo de faturamento de março,HIGH,IN_PROGRESS,carlos.lima@example.com
+Corrigir bug na tela de login com SSO,Usuários com autenticação via Google não conseguem acessar após atualização,MEDIUM,OPEN,beatriz.rocha@example.com
+Atualizar contrato de prestação de serviços,Cláusula 7 precisa refletir novos termos de SLA acordados com o cliente,LOW,OPEN,joao.ferreira@example.com
+Investigar lentidão no relatório de vendas,Relatório mensal demora mais de 2 minutos para carregar com filtros ativos,MEDIUM,IN_PROGRESS,mariana.costa@example.com
+Solicitar acesso ao ambiente de staging,Time de QA precisa de credenciais atualizadas para o ambiente de homologação,LOW,CLOSED,pedro.alves@example.com
+Revisar política de privacidade para LGPD,Adequar linguagem e seções de consentimento conforme orientação jurídica,HIGH,OPEN,fernanda.dias@example.com
+Corrigir exportação de planilha em formato XLSX,Arquivo exportado apresenta encoding incorreto para caracteres especiais,MEDIUM,CLOSED,rodrigo.santos@example.com

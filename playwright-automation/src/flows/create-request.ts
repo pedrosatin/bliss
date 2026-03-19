@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { BrowserContext, Locator, Page } from 'playwright'
+import { Browser, BrowserContext, Locator, Page } from 'playwright'
 
 import { logger } from '../utils/logger'
 import { CreateRequestResult, RequestCsvItem } from '../types/FlowRequest'
@@ -68,10 +68,11 @@ async function readFeedback(
 // Main flow function
 
 export async function createRequest(
-  context: BrowserContext,
+  browser: Browser,
   csvItem: RequestCsvItem,
   artifactsDir: string,
 ): Promise<CreateRequestResult> {
+  const context: BrowserContext = await browser.newContext()
   const tracePath = path.join(
     artifactsDir,
     `row-${csvItem.rowNumber}-failure-trace.zip`,
@@ -87,7 +88,7 @@ export async function createRequest(
   }
 
   try {
-    logger.info('Executando criação de request', {
+    logger.info(`Executando criação de request em ${DEFAULT_CREATE_URL}`, {
       rowNumber: csvItem.rowNumber,
       title: csvItem.title,
     })
@@ -156,17 +157,6 @@ export async function createRequest(
       errorMessage: error instanceof Error ? error.message : String(error),
     }
   } finally {
-    if (page) {
-      try {
-        await page.close()
-      } catch (error) {
-        logger.error('Falha ao fechar página do fluxo', {
-          rowNumber: csvItem.rowNumber,
-          error: error instanceof Error ? error.message : String(error),
-        })
-      }
-    }
-
     if (traceStarted) {
       try {
         if (result.success) {
@@ -182,6 +172,15 @@ export async function createRequest(
           error: error instanceof Error ? error.message : String(error),
         })
       }
+    }
+
+    try {
+      await context.close()
+    } catch (error) {
+      logger.error('Falha ao fechar contexto do fluxo', {
+        rowNumber: csvItem.rowNumber,
+        error: error instanceof Error ? error.message : String(error),
+      })
     }
   }
 
