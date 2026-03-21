@@ -9,6 +9,7 @@ import {
   getDynamoDBDocumentClient,
   getTicketsTableName,
 } from '@app/lib/dynamodb'
+import { ValidationError } from '@app/lib/errors'
 import { logInfo, RequestContextLog } from '@app/lib/logger'
 import { Ticket } from '@app/types/Ticket'
 import { TicketListFilters } from '@app/types/TicketListFilters'
@@ -32,9 +33,22 @@ const decodeNextToken = (nextToken?: string) => {
     return undefined
   }
 
-  return JSON.parse(
-    Buffer.from(nextToken, 'base64url').toString('utf8'),
-  ) as Record<string, unknown>
+  try {
+    const decodedValue = Buffer.from(nextToken, 'base64url').toString('utf8')
+    const parsedToken = JSON.parse(decodedValue)
+
+    if (!parsedToken || typeof parsedToken !== 'object') {
+      throw new ValidationError('nextToken filter is invalid')
+    }
+
+    return parsedToken as Record<string, unknown>
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error
+    }
+
+    throw new ValidationError('nextToken filter is invalid')
+  }
 }
 
 export const fetchAllTickets = async (

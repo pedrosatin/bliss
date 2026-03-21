@@ -9,8 +9,11 @@
     "cdk:diff": "cdk diff",
     "cdk:deploy": "cdk deploy --all",
     "cdk:destroy": "cdk destroy --all",
+    "build": "tsc --noEmit false",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest --watch",
@@ -18,7 +21,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.758.0",
-    "@aws-sdk/lib-dynamodb": "^3.758.0"
+    "@aws-sdk/lib-dynamodb": "^3.758.0",
+    "dotenv": "^17.3.1"
   },
   "devDependencies": {
     "@hono/node-server": "^1.19.11",
@@ -29,6 +33,7 @@
     "hono": "^4.12.7",
     "nodemon": "^3.1.10",
     "oxlint": "^1.51.0",
+    "prettier": "^3.6.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"

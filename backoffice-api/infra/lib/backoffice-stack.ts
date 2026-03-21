@@ -105,7 +105,7 @@ export const createBackofficeStack = (
         apiGateway.CorsHttpMethod.POST,
         apiGateway.CorsHttpMethod.OPTIONS,
       ],
-      allowOrigins: ['*'], // TODO: Create a web page and restrict this for production
+      allowOrigins: ['https://bliss-front.pedrosatin.com'],
       allowHeaders: ['Content-Type', 'x-request-id'],
     },
   })

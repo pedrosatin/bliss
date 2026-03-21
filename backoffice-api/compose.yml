@@ -53,11 +53,9 @@ services:
       - /app/node_modules # shadow host node_modules to prevent platform binary conflicts (e.g. esbuild linux vs darwin)
     ports:
       - '3000:3000'
+    env_file: .env
     environment:
-      AWS_REGION: sa-east-1
-      TABLE_NAME: backoffice-api-local-tickets
       DYNAMODB_ENDPOINT: http://dynamodb:8000
-      PORT: 3000
       CHOKIDAR_USEPOLLING: 1
       CHOKIDAR_INTERVAL: 500
     command: sh -c "npm install --prefer-offline && npx nodemon"

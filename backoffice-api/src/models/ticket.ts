@@ -9,6 +9,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export const DEFAULT_TICKET_LIST_LIMIT = 10
 export const MAX_TICKET_LIST_LIMIT = 100
+export const TITLE_MAX_LENGTH = 120
+export const DESCRIPTION_MAX_LENGTH = 1000
 
 const normalizeQueryValue = (value?: string | null): string | undefined => {
   const normalizedValue = value?.trim()
@@ -20,6 +22,14 @@ export const validateCreateTicketInput = (
 ): string | null => {
   if (!input.title?.trim()) {
     return 'Please inform the title'
+  }
+
+  if (input.title.trim().length > TITLE_MAX_LENGTH) {
+    return `Title must be at most ${TITLE_MAX_LENGTH} characters`
+  }
+
+  if (input.description && input.description.trim().length > DESCRIPTION_MAX_LENGTH) {
+    return `Description must be at most ${DESCRIPTION_MAX_LENGTH} characters`
   }
 
   if (!isTicketPriority(input.priority)) {
@@ -57,9 +67,17 @@ export const validateTicketListFilterInput = (
   }
 
   if (input.limit !== undefined) {
+    if (!normalizedLimit) {
+      return `limit filter must be an integer between 1 and ${MAX_TICKET_LIST_LIMIT}`
+    }
+
     const parsedLimit = Number(normalizedLimit)
 
-    if (parsedLimit < 1 || parsedLimit > MAX_TICKET_LIST_LIMIT) {
+    if (
+      !Number.isInteger(parsedLimit) ||
+      parsedLimit < 1 ||
+      parsedLimit > MAX_TICKET_LIST_LIMIT
+    ) {
       return `limit filter must be an integer between 1 and ${MAX_TICKET_LIST_LIMIT}`
     }
   }
@@ -78,10 +96,12 @@ export const buildTicketListFilters = (
   const normalizedStatus = normalizeQueryValue(input.status)?.toUpperCase()
   const normalizedLimit = normalizeQueryValue(input.limit)
   const nextToken = normalizeQueryValue(input.nextToken)
+  const parsedLimit = normalizedLimit ? Number(normalizedLimit) : undefined
 
-  const limit = normalizedLimit
-    ? Math.min(Math.max(Number(normalizedLimit), 1), MAX_TICKET_LIST_LIMIT)
-    : DEFAULT_TICKET_LIST_LIMIT
+  const limit =
+    parsedLimit !== undefined && Number.isInteger(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), MAX_TICKET_LIST_LIMIT)
+      : DEFAULT_TICKET_LIST_LIMIT
 
   let inputFilter: TicketListFilters = { limit }
 

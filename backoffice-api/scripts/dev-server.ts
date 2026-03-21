@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { Hono, Context } from 'hono'
 import { StatusCode } from 'hono/utils/http-status'
 import { serve } from '@hono/node-server'
