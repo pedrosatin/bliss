@@ -4,6 +4,14 @@ import { parse } from 'csv-parse/sync'
 
 import { RequestCsvItem } from '../types/FlowRequest'
 
+const REQUIRED_COLUMNS: (keyof Omit<RequestCsvItem, 'rowNumber'>)[] = [
+  'title',
+  'description',
+  'priority',
+  'status',
+  'createdBy',
+]
+
 const normalizeLineEndings = (content: string): string =>
   content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
 
@@ -17,6 +25,18 @@ export async function readRequestsFromCsv(
     skip_empty_lines: true,
     trim: true,
   }) as Record<string, string>[]
+
+  if (records.length > 0) {
+    const presentColumns = Object.keys(records[0])
+    const missingColumns = REQUIRED_COLUMNS.filter(
+      (col) => !presentColumns.includes(col),
+    )
+    if (missingColumns.length > 0) {
+      throw new Error(
+        `CSV inválido — colunas obrigatórias ausentes: ${missingColumns.join(', ')}`,
+      )
+    }
+  }
 
   const items = records.map((row, index) => ({
     rowNumber: index + 1,
