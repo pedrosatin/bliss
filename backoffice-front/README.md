@@ -87,27 +87,22 @@ Depois acesse:
 
 ## Deploy estático
 
-### GitHub Pages
+Esse site está publicado em `https://bliss-front.pedrosatin.com` usando o serviço de hosting do github pages e fazendo um redirect do domínio customizado para a URL do github pages.
 
-- o workflow está em `.github/workflows/deploy-backoffice-front.yml`
-- ele publica somente a pasta `backoffice-front/`
-- ele só roda em `push` para `main` quando houver mudanças em `backoffice-front/**`
-- mudanças apenas em `backoffice-api/`, `playwright-automation/` ou outros diretórios não disparam esse deploy
-- também existe `workflow_dispatch` para disparo manual quando você quiser
-- como as páginas são arquivos reais (`index.html`, `create.html`, `request.html`), não há dependência de SPA routing
+---
 
-Passos no repositório:
+## Por que este front foi criado
 
-- em `Settings > Pages`, selecione `GitHub Actions` como source
-- faça merge/push em `main` alterando algo dentro de `backoffice-front/`
-- o artifact publicado será exatamente o conteúdo estático dessa pasta
+O `backoffice-front` não era um requisito do case-1. A decisão de criá-lo foi intencional:
 
-### Cloudflare Pages
+- **Integra os três projetos** — o case-2 pede automação de uma interface web. Sem o front, a automação seria uma chamada direta à API, o que desvirtuaria o propósito do case.
+- **Facilita a avaliação** — avaliadores podem testar o fluxo completo pelo browser sem precisar de `curl`.
+- **Custo baixo** — o front foi gerado majoritariamente com IA e não representou esforço significativo.
+- **Controle de acesso** — com API e front no mesmo domínio próprio, é possível restringir o CORS da API para aceitar apenas este front.
 
-- conecte o repositório e configure o diretório de output como `backoffice-front`
-- ajuste `DEPLOY_API_BASE_URL` antes do deploy
-- aponte o subdomínio desejado no painel da Cloudflare
+---
 
-## Observação
+## Limitações conhecidas
 
-A API atual não oferece `PUT` ou `PATCH`, então a tela por id é de detalhe. Se você adicionar update no backend, a `request.html` pode ser adaptada para edição com poucas mudanças.
+- O botão "Limpar filtros" reseta o seletor de ambiente para "Local" em vez de manter o ambiente atual selecionado.
+- Dark mode não implementado. Poderia seguir a preferência do sistema operacional via `prefers-color-scheme`.
