@@ -6,9 +6,8 @@ import { CreateRequestResult, RequestCsvItem } from '../types/FlowRequest'
 
 // Constants
 
-const DEFAULT_CREATE_URL =
-  process.env.BLISS_FRONT_CREATE_URL ??
-  'https://bliss-front.pedrosatin.com/create.html'
+const DEFAULT_URL = process.env.BLISS_FRONT_URL ?? 'http://localhost:4173'
+const DEFAULT_CREATE_URL = `${DEFAULT_URL}/create.html`
 
 const FEEDBACK_TIMEOUT_MS = 5_000
 
@@ -30,7 +29,6 @@ const getPageHeading = (page: Page): Locator =>
   page.getByRole('heading', { name: /nova request/i })
 
 // Helpers
-
 
 async function readFeedback(
   feedback: Locator,

@@ -7,6 +7,5 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 /dist/
-/artifacts/
-/output/
+/runs
 .env

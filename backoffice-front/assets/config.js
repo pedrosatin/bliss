@@ -48,13 +48,19 @@ const readStorageOverride = () => {
 }
 
 const storageOverride = readStorageOverride()
-const defaultEnvironment = API_ENVIRONMENTS.prod
+const defaultEnvironment =
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? API_ENVIRONMENTS.local
+    : API_ENVIRONMENTS.prod
 
 export const API_BASE_URL = (
   storageOverride?.value || defaultEnvironment.url
 ).trim()
 
-export const API_ENVIRONMENT = storageOverride?.mode || 'prod'
+export const API_ENVIRONMENT =
+  storageOverride?.mode ||
+  (defaultEnvironment === API_ENVIRONMENTS.local ? 'local' : 'prod')
 
 export const API_SOURCE_LABEL = storageOverride
   ? storageOverride.sourceLabel
