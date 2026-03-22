@@ -9,7 +9,7 @@
     "dev:headed": "HEADLESS=false tsx index.ts",
     "dev:debug": "PWDEBUG=1 HEADLESS=false tsx index.ts",
     "start": "node index.js",
-    "test:e2e": "playwright test"
+    "clean": "rm -rf runs/"
   },
   "keywords": [],
   "author": "",

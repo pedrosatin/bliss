@@ -26,26 +26,38 @@ export async function readRequestsFromCsv(
     trim: true,
   }) as Record<string, string>[]
 
-  if (records.length > 0) {
-    const presentColumns = Object.keys(records[0])
-    const missingColumns = REQUIRED_COLUMNS.filter(
-      (col) => !presentColumns.includes(col),
-    )
-    if (missingColumns.length > 0) {
-      throw new Error(
-        `CSV inválido — colunas obrigatórias ausentes: ${missingColumns.join(', ')}`,
-      )
-    }
+  if (records.length === 0) {
+    throw new Error('CSV inválido — nenhuma linha de dados encontrada')
   }
 
-  const items = records.map((row, index) => ({
-    rowNumber: index + 1,
-    title: String(row.title ?? ''),
-    description: String(row.description ?? ''),
-    priority: String(row.priority ?? ''),
-    status: String(row.status ?? ''),
-    createdBy: String(row.createdBy ?? ''),
-  }))
+  const presentColumns = Object.keys(records[0])
+  const missingColumns = REQUIRED_COLUMNS.filter(
+    (col) => !presentColumns.includes(col),
+  )
+  if (missingColumns.length > 0) {
+    throw new Error(
+      `CSV inválido — colunas obrigatórias ausentes: ${missingColumns.join(', ')}`,
+    )
+  }
+
+  const items = records.map((row, index) => {
+    const rowNumber = index + 1
+    const emptyFields = REQUIRED_COLUMNS.filter((col) => !row[col]?.trim())
+    if (emptyFields.length > 0) {
+      throw new Error(
+        `CSV inválido — linha ${rowNumber} tem campos obrigatórios vazios: ${emptyFields.join(', ')}`,
+      )
+    }
+
+    return {
+      rowNumber,
+      title: row.title.trim(),
+      description: row.description.trim(),
+      priority: row.priority.trim(),
+      status: row.status.trim(),
+      createdBy: row.createdBy.trim(),
+    }
+  })
 
   return items
 }

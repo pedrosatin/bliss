@@ -2,7 +2,8 @@ import 'dotenv/config'
 import path from 'node:path'
 
 import { createRequest } from './src/flows/create-request'
-import { createRunArtifactsDir, writeRunOutput } from './src/utils/artifacts'
+import { withRetry } from './src/utils/retry'
+import { createRunDir, writeRunOutput } from './src/utils/artifacts'
 import { logger } from './src/utils/logger'
 import { FlowResult } from './src/types/FlowResult'
 import { CreateRequestResult } from './src/types/FlowRequest'
@@ -26,19 +27,21 @@ function buildSummary(items: CreateRequestResult[]): FlowResult['summary'] {
 }
 
 async function runBatch(browser: Browser): Promise<FlowResult> {
-  const artifactsDir = await createRunArtifactsDir(flowName)
   logger.info('Lendo CSV de entrada', { csvPath })
-
   const requests = await readRequestsFromCsv(csvPath)
+
+  const runDir = await createRunDir(flowName)
   const itemResults: CreateRequestResult[] = []
 
   for (const item of requests) {
-    const result = await createRequest(browser, item, artifactsDir)
+    const result = await withRetry(() =>
+      createRequest(browser, item, runDir),
+    )
     itemResults.push(result)
   }
 
   const summary = buildSummary(itemResults)
-  const outputPath = await writeRunOutput(flowName, {
+  await writeRunOutput(runDir, {
     flow: flowName,
     taskName,
     sourceCsvPath: csvPath,
@@ -49,8 +52,7 @@ async function runBatch(browser: Browser): Promise<FlowResult> {
 
   return {
     success: summary.failureCount === 0,
-    artifactsDir,
-    outputPath,
+    runDir,
     summary,
     items: itemResults,
   }
@@ -68,8 +70,7 @@ async function main() {
 
     logger.info('Task finalizada com sucesso', {
       taskName,
-      artifactsDir: result.artifactsDir,
-      outputPath: result.outputPath,
+      runDir: result.runDir,
       summary: result.summary,
     })
 

@@ -8,8 +8,7 @@ export interface FlowSummary {
 
 export interface FlowResult {
   success: boolean
-  artifactsDir: string
-  outputPath: string
+  runDir: string
   summary: FlowSummary
   items: CreateRequestResult[]
   error?: Error

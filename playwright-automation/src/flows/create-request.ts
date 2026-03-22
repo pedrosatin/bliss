@@ -31,28 +31,6 @@ const getPageHeading = (page: Page): Locator =>
 
 // Helpers
 
-async function captureSuccessScreenshotSafely(
-  page: Page,
-  artifactsDir: string,
-  rowNumber: number,
-): Promise<string> {
-  try {
-    const screenshotPath = path.join(
-      artifactsDir,
-      `row-${rowNumber}-success.png`,
-    )
-
-    await page.screenshot({ path: screenshotPath, fullPage: true })
-
-    return screenshotPath
-  } catch (error) {
-    logger.error('Falha ao capturar screenshot de sucesso', {
-      rowNumber,
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return ''
-  }
-}
 
 async function readFeedback(
   feedback: Locator,
@@ -73,6 +51,10 @@ export async function createRequest(
   artifactsDir: string,
 ): Promise<CreateRequestResult> {
   const context: BrowserContext = await browser.newContext()
+  const screenshotPath = path.join(
+    artifactsDir,
+    `row-${csvItem.rowNumber}-success.png`,
+  )
   const tracePath = path.join(
     artifactsDir,
     `row-${csvItem.rowNumber}-failure-trace.zip`,
@@ -129,18 +111,24 @@ export async function createRequest(
 
     const feedbackResult = await readFeedback(feedback)
     const isSuccess = feedbackResult.className.includes('success')
-    const screenshotPath = isSuccess
-      ? await captureSuccessScreenshotSafely(
-          page,
-          artifactsDir,
-          csvItem.rowNumber,
-        )
-      : undefined
+
+    let capturedScreenshotPath: string | undefined
+    if (isSuccess) {
+      try {
+        await page.screenshot({ path: screenshotPath, fullPage: true })
+        capturedScreenshotPath = screenshotPath
+      } catch (error) {
+        logger.error('Falha ao capturar screenshot de sucesso', {
+          rowNumber: csvItem.rowNumber,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+    }
 
     result = {
       rowNumber: csvItem.rowNumber,
       success: isSuccess,
-      screenshotPath,
+      screenshotPath: capturedScreenshotPath,
       feedbackText: feedbackResult.text,
       errorMessage: isSuccess ? undefined : feedbackResult.text,
     }
