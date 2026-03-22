@@ -34,9 +34,7 @@ async function runBatch(browser: Browser): Promise<FlowResult> {
   const itemResults: CreateRequestResult[] = []
 
   for (const item of requests) {
-    const result = await withRetry(() =>
-      createRequest(browser, item, runDir),
-    )
+    const result = await withRetry(() => createRequest(browser, item, runDir))
     itemResults.push(result)
   }
 
@@ -63,6 +61,7 @@ async function main() {
 
   const browser = await chromium.launch({
     headless: process.env.HEADLESS !== 'false',
+    slowMo: process.env.HEADLESS === 'false' ? 500 : undefined,
   })
 
   try {

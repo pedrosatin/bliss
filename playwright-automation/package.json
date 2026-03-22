@@ -8,7 +8,11 @@
     "dev": "tsx index.ts",
     "dev:headed": "HEADLESS=false tsx index.ts",
     "dev:debug": "PWDEBUG=1 HEADLESS=false tsx index.ts",
+    "dev:prod": "BLISS_FRONT_URL=https://bliss-front.pedrosatin.com tsx index.ts",
+    "dev:prod:headed": "BLISS_FRONT_URL=https://bliss-front.pedrosatin.com HEADLESS=false tsx index.ts",
     "start": "node index.js",
+    "lint:fix": "oxlint --fix",
+    "format": "prettier --write .",
     "clean": "rm -rf runs/"
   },
   "keywords": [],
@@ -24,6 +28,8 @@
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.5.0",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "oxlint": "^1.51.0",
+    "prettier": "^3.6.2"
   }
 }
