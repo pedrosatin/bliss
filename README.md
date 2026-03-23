@@ -48,6 +48,8 @@ cd backoffice-api && cp .env.example .env && npm i && npm run dev
 # Terminal 2 — Front em localhost:4173
 cd backoffice-front && npx live-server --port=4173
 
+# Na porta 4173, o front consome a API local automaticamente. Você pode testar o fluxo completo pelo browser.
+
 # Terminal 3 — Automação apontando para o front local
 cd playwright-automation && cp .env.example .env && npm i && npm run dev
 ```
@@ -63,7 +65,9 @@ cd playwright-automation && npm i && npm run dev:prod
 
 Lembrando que é necessário ter o playwright browser instalado para rodar o comando acima.
 
-Para detalhes de cada projeto, consulte os READMEs individuais:
+Recomendo rodar um `npm run clean` após testar o ambiente local do playwright, para limpar os arquivos de teste gerados.
+
+Para detalhes de cada projeto, e também evidências, consulte os READMEs individuais:
 
 1. [`README backoffice-api`](./backoffice-api/README.md)
 2. [`README backoffice-front`](./backoffice-front/README.md)

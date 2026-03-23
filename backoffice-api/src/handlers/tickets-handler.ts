@@ -262,7 +262,7 @@ export const handleCreateTicket = async (
 
     return successResponse(
       HttpStatusCode.Created,
-      newTicket,
+      { id: newTicket.id },
       buildRequestIdHeader(requestId),
     )
   } catch (error) {
