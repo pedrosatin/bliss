@@ -14,4 +14,5 @@ export interface CreateRequestResult {
   tracePath?: string
   feedbackText: string
   errorMessage?: string
+  createdId?: string
 }

@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { Browser, BrowserContext, Locator, Page } from 'playwright'
+import { Browser, BrowserContext, Page } from 'playwright'
 
 import { logger } from '../utils/logger'
 import { CreateRequestResult, RequestCsvItem } from '../types/FlowRequest'
@@ -11,33 +11,66 @@ const DEFAULT_CREATE_URL = `${DEFAULT_URL}/create.html`
 
 const FEEDBACK_TIMEOUT_MS = 5_000
 
-// Queries
+// Page Objects
 
-const getTitleInput = (page: Page): Locator => page.getByLabel(/título/i)
-const getDescriptionInput = (page: Page): Locator =>
-  page.getByLabel(/descrição/i)
-const getPrioritySelect = (page: Page): Locator =>
-  page.getByLabel(/prioridade/i)
-const getStatusSelect = (page: Page): Locator =>
-  page.getByLabel(/status inicial/i)
-const getCreatedByInput = (page: Page): Locator =>
-  page.getByLabel(/email do criador/i)
-const getSubmitButton = (page: Page): Locator =>
-  page.getByRole('button', { name: /criar request/i })
-const getFeedback = (page: Page): Locator => page.locator('#feedback')
-const getPageHeading = (page: Page): Locator =>
-  page.getByRole('heading', { name: /nova request/i })
+function createRequestPage(page: Page) {
+  const feedback = page.locator('#feedback')
 
-// Helpers
-
-async function readFeedback(
-  feedback: Locator,
-): Promise<{ text: string; className: string }> {
-  const text = (await feedback.textContent())?.trim() ?? ''
-  const className = (await feedback.getAttribute('class')) ?? ''
   return {
-    text,
-    className,
+    goto: () => page.goto(DEFAULT_CREATE_URL, { waitUntil: 'domcontentloaded' }),
+
+    waitForLoad: () =>
+      page
+        .getByRole('heading', { name: /nova request/i })
+        .waitFor({ state: 'visible', timeout: FEEDBACK_TIMEOUT_MS }),
+
+    fillForm: async (item: RequestCsvItem) => {
+      await page.getByLabel(/título/i).fill(item.title)
+      await page.getByLabel(/descrição/i).fill(item.description)
+      await page.getByLabel(/prioridade/i).selectOption(item.priority)
+      await page.getByLabel(/status inicial/i).selectOption(item.status)
+      await page.getByLabel(/email do criador/i).fill(item.createdBy)
+    },
+
+    submit: () =>
+      page.getByRole('button', { name: /criar request/i }).click(),
+
+    waitForFeedback: () =>
+      feedback.waitFor({ state: 'visible', timeout: FEEDBACK_TIMEOUT_MS }),
+
+    readFeedback: async (): Promise<{ text: string; className: string }> => ({
+      text: (await feedback.textContent())?.trim() ?? '',
+      className: (await feedback.getAttribute('class')) ?? '',
+    }),
+
+    getCreatedId: async (): Promise<string | undefined> => {
+      const href = await feedback.locator('a').getAttribute('href')
+      return href
+        ? (new URLSearchParams(href.split('?')[1]).get('id') ?? undefined)
+        : undefined
+    },
+  }
+}
+
+function requestDetailPage(page: Page) {
+  return {
+    goto: (id: string) =>
+      page.goto(`${DEFAULT_URL}/request.html?id=${id}`, {
+        waitUntil: 'domcontentloaded',
+      }),
+
+    waitForData: () =>
+      page.waitForFunction(
+        () => {
+          const text =
+            document.querySelector('#detail-id')?.textContent?.trim() ?? ''
+          return text !== '' && text !== '-'
+        },
+        { timeout: FEEDBACK_TIMEOUT_MS },
+      ),
+
+    screenshot: (screenshotPath: string) =>
+      page.screenshot({ path: screenshotPath, fullPage: true }),
   }
 }
 
@@ -81,39 +114,29 @@ export async function createRequest(
     traceStarted = true
 
     page = await context.newPage()
-    await page.goto(DEFAULT_CREATE_URL, { waitUntil: 'domcontentloaded' })
+    const form = createRequestPage(page)
 
-    const titleInput = getTitleInput(page)
-    const descriptionInput = getDescriptionInput(page)
-    const prioritySelect = getPrioritySelect(page)
-    const statusSelect = getStatusSelect(page)
-    const createdByInput = getCreatedByInput(page)
-    const submitButton = getSubmitButton(page)
-    const feedback = getFeedback(page)
-    const pageHeading = getPageHeading(page)
+    await form.goto()
+    await form.waitForLoad()
+    await form.fillForm(csvItem)
+    await Promise.all([form.waitForFeedback(), form.submit()])
 
-    await pageHeading.waitFor({
-      state: 'visible',
-      timeout: FEEDBACK_TIMEOUT_MS,
-    })
-    await titleInput.fill(csvItem.title)
-    await descriptionInput.fill(csvItem.description)
-    await prioritySelect.selectOption(csvItem.priority)
-    await statusSelect.selectOption(csvItem.status)
-    await createdByInput.fill(csvItem.createdBy)
-
-    await Promise.all([
-      feedback.waitFor({ state: 'visible', timeout: FEEDBACK_TIMEOUT_MS }),
-      submitButton.click(),
-    ])
-
-    const feedbackResult = await readFeedback(feedback)
+    const feedbackResult = await form.readFeedback()
     const isSuccess = feedbackResult.className.includes('success')
 
     let capturedScreenshotPath: string | undefined
+    let createdId: string | undefined
+
     if (isSuccess) {
+      createdId = await form.getCreatedId()
+
       try {
-        await page.screenshot({ path: screenshotPath, fullPage: true })
+        const detail = requestDetailPage(page)
+        if (createdId) {
+          await detail.goto(createdId)
+          await detail.waitForData()
+        }
+        await detail.screenshot(screenshotPath)
         capturedScreenshotPath = screenshotPath
       } catch (error) {
         logger.error('Falha ao capturar screenshot de sucesso', {
@@ -129,6 +152,7 @@ export async function createRequest(
       screenshotPath: capturedScreenshotPath,
       feedbackText: feedbackResult.text,
       errorMessage: isSuccess ? undefined : feedbackResult.text,
+      createdId,
     }
   } catch (error) {
     logger.error('Erro técnico ao criar request', {
@@ -136,11 +160,15 @@ export async function createRequest(
       error: error instanceof Error ? error.message : String(error),
     })
 
+    const ANSI_RE = /\x1b\[[0-9;]*m/g
     result = {
       rowNumber: csvItem.rowNumber,
       success: false,
       feedbackText: '',
-      errorMessage: error instanceof Error ? error.message : String(error),
+      errorMessage: (error instanceof Error ? error.message : String(error))
+        .replace(ANSI_RE, '')
+        .replace(/\\n/g, '\n')
+        .trim(),
     }
   } finally {
     if (traceStarted) {

@@ -110,31 +110,46 @@ Veja um exemplo completo em [`src/examples/form-data.csv`](src/examples/form-dat
 
 ---
 
-### Decisões de arquitetura
+### Evidências
 
-**Sem Page Objects**
-O fluxo automatiza um único formulário de uma etapa. Os locators estão centralizados no
-topo de [`src/flows/create-request.ts`](src/flows/create-request.ts), o que já oferece
-clareza suficiente. Page Objects fariam sentido para fluxos multi-step ou múltiplas páginas.
+**Execução com CSV correto — terminal**
+
+<img src=".github-assets/correct-format-run.png" alt="Terminal mostrando execução com CSV no formato correto" width="800" />
+
+**Result.json após execução bem-sucedida**
+
+<img src=".github-assets/correct-result+get.png" alt="Terminal com cat do result.json de uma execução com sucesso" width="800" />
+
+**Página de detalhe da request criada**
+
+<img src=".github-assets/success-detail.png" alt="Screenshot da página de detalhe da request criada com sucesso" width="800" />
+
+**CSV com dados no formato errado — terminal**
+
+<img src=".github-assets/error-format.png" alt="Terminal mostrando CSV com formato inválido" width="800" />
+
+**Result.json após execução com falha**
+
+<img src=".github-assets/result-error.png" alt="Terminal com cat do result.json de uma execução com erro" width="800" />
+
+**Inspeção do trace de falha no Playwright**
+
+<img src=".github-assets/tracing-error.png" alt="Playwright Trace Viewer mostrando o trace de uma linha com falha" width="800" />
+
+---
+
+### Decisões de arquitetura
 
 **Screenshot em sucesso, trace em falha**
 Em caso de sucesso, um screenshot full-page é suficiente para evidenciar que o formulário foi
-preenchido e submetido corretamente — é leve e imediatamente legível. O trace completo (com
-DOM snapshots, network e sources) só é salvo em falhas, onde o contexto extra é necessário
+preenchido e submetido corretamente. O trace completo só é salvo em falhas, onde o contexto extra é necessário
 para debugar o problema.
 
 **`fill()` em vez de `pressSequentially()`**
 O preenchimento dos campos usa `fill()`, que define o valor instantaneamente — comportamento claramente robótico. A alternativa mais realista seria `pressSequentially()` com um `delay` entre teclas e `page.mouse.move()` para simular foco humano, o que dificultaria a detecção por sistemas anti-bot. A decisão foi manter `fill()` porque o alvo é um sistema próprio sem proteção anti-bot, e o ganho de realismo não justifica a complexidade e lentidão adicionais para este contexto.
 
-**Sem retries manuais no loop**
-O Playwright já faz retry automático em todos os queries e assertions (ex.: `waitFor`, `fill`,
-`selectOption`). Para este fluxo, um erro técnico — como timeout de rede ou elemento ausente —
-provavelmente se repetiria numa segunda tentativa. O comportamento preferido é falhar rápido,
-registrar o trace e seguir para a próxima linha.
-
 **Automatizando um front próprio**
 O case-2 automatiza o `backoffice-front`, que foi criado para o case-1 — não um sistema externo.
-Isso pode parecer estranho à primeira vista (como testar o resultado de uma função mockada), mas
-é uma decisão consciente: os três projetos formam uma caixa fechada integrada (`API ← front ← automação`),
-e o front não é um mock — tem validações reais, feedback de erro e navegação. Uma chamada direta
-à API não seria compatível com o que o case-2 pede.
+Isso pode parecer estranho, como testar o resultado de uma função mockada, mas
+foi uma decisão consciente: os três projetos formam uma caixa fechada integrada (`API ← front ← automação`),
+e o front não é um mock, pois tem validações reais, feedback de erro e navegação.
