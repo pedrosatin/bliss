@@ -119,6 +119,22 @@ curl -i -X POST 'https://bliss-api.pedrosatin.com/requests' \
 
 - Resultado esperado: status `201` com `id` gerado e header `x-request-id`.
 
+**API Gateway — detalhes e stages**
+
+<img src=".github-assets/api-gateway.png" alt="API Gateway backoffice-api com detalhes e stages configurados na AWS" width="800" />
+
+**Lambdas — três funções deployadas**
+
+<img src=".github-assets/lambdas.png" alt="Três funções Lambda listadas na AWS, uma por endpoint" width="800" />
+
+**Log do API Gateway com requestId**
+
+<img src=".github-assets/log-gateway.png" alt="Log do API Gateway no CloudWatch com requestId da requisição" width="800" />
+
+**Log da Lambda com o mesmo requestId**
+
+<img src=".github-assets/log-lambda.png" alt="Log da Lambda no CloudWatch com o mesmo requestId do API Gateway, mostrando rastreabilidade ponta a ponta" width="800" />
+
 ## Decisões de arquitetura
 
 **Por que CDK em vez do Serverless Framework**
